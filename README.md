@@ -1,13 +1,45 @@
 # go-music-k8s
 
-```bash
+```plaintext
 .
+├── Dockerfile
 ├── README.md
 ├── cli
 │   └── main.go
+├── go.mod
+├── go.sum
+├── helm
+│   ├── Chart.yaml
+│   ├── customvalues.yaml
+│   ├── templates
+│   │   ├── NOTES.txt
+│   │   ├── _helpers.tpl
+│   │   ├── configmap-musicapi.yaml
+│   │   ├── deployment-musicapi.yaml
+│   │   ├── deployment-mysql.yaml
+│   │   ├── ns-musicapi.yaml
+│   │   ├── ns-mysql.yaml
+│   │   ├── pvc-mysql.yaml
+│   │   ├── secret-musicapi.yaml
+│   │   ├── secret-mysql.yaml
+│   │   ├── service-musicapi.yaml
+│   │   ├── service-mysql.yaml
+│   │   └── tests
+│   │       └── test-connection.yaml
+│   └── values.yaml
 ├── manifests
 │   ├── musicapi
+│   │   ├── configmap-musicapi.yaml
+│   │   ├── deployment-musicapi.yaml
+│   │   ├── ns-musicapi.yaml
+│   │   ├── secret-musicapi.yaml
+│   │   └── service-musicapi.yaml
 │   └── mysql
+│       ├── deployment-mysql.yaml
+│       ├── ns-mysql.yaml
+│       ├── pvc-mysql.yaml
+│       ├── secret-mysql.yaml
+│       └── service-mysql.yaml
 └── pkg
     ├── config
     │   ├── config.go
@@ -15,7 +47,7 @@
     ├── db
     │   ├── db.go
     │   └── sql.sh
-    ├── musicapi
+    ├── musicapp
     │   ├── init.go
     │   ├── music_dao.go
     │   ├── music_methods.go
@@ -188,10 +220,55 @@ func (m *musicApiOrm) Post(db *gorm.DB, song *Song) error {
 }
 ```
 
+## Unit Tests
+
+Para testar a aplicação, utilizaremos o pacote `testing` do Go.
+
+```go
+package musicapp
+
+import (
+	"github.com/kaiohenricunha/go-music-k8s/pkg/config"
+	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"log"
+	"testing"
+)
+
+func TestPostSong(t *testing.T) {
+	db := SetupTestDB()     // Initialize and migrate your test database
+	defer clearDatabase(db) // Ensure the database is cleared after the test runs.
+	cfg := &config.Config{DB: db}
+
+	song := &Song{Name: "Test Song", Artist: "Test Artist"}
+
+	err := PostSong(cfg, song)
+	assert.NoError(t, err, "Failed to post a new song")
+}
+```
+
+In the pkg/musicapp/musicapp_test.go file, we have a test function for each of the operations in the musicapp API. To run the tests, execute the following command:
+
+```bash
+go test ./pkg/musicapp
+```
+
+You should see the following output:
+
+```bash
+go test
+2024/03/25 00:57:26 2 rows found
+PASS
+ok      github.com/kaiohenricunha/go-music-k8s/pkg/musicapp     0.496s
+```
+
 ## Deployment
 
 ### musicapi
 
-
+WIP
 
 ### mysql
+
+WIP
