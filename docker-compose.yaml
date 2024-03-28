@@ -1,0 +1,28 @@
+version: '3.1'
+
+services:
+  backend:
+    image: kaiohenricunha/go-music-k8s:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    environment:
+      CONFIG_DBHOST: "mysql:3306"
+      CONFIG_DBNAME: "musicapp"
+      CONFIG_DBPASS: "green"
+      CONFIG_DBUSER: "root"
+      CONFIG_SERVER_PORT: "8081"
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: green
+      MYSQL_DATABASE: musicapp
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
