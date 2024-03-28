@@ -12,3 +12,6 @@ INSERT INTO songs (created_at, updated_at, name, artist) VALUES (now(), now(), "
 INSERT INTO songs (created_at, updated_at, name, artist) VALUES (now(), now(), "Hotel California", "The Eagles");
 INSERT INTO songs (created_at, updated_at, name, artist) VALUES (now(), now(), "Comfortably Numb", "Pink Floyd");
 INSERT INTO songs (created_at, updated_at, name, artist) VALUES (now(), now(), "Borbulhas de Amor", "Fagner");
+
+# list all songs
+SELECT * FROM songs;

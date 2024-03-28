@@ -12,7 +12,7 @@ const (
 type musicDaoInterface interface {
 	Get(db *gorm.DB) ([]*Song, error)
 	Post(db *gorm.DB, song *Song) error
-	Update(db *gorm.DB, song *Song) error
+	Update(db *gorm.DB, songID uint, song *Song) error
 	Delete(db *gorm.DB, songID uint) error
 }
 
@@ -41,8 +41,8 @@ func (m *musicApiOrm) Post(db *gorm.DB, song *Song) error {
 	return nil
 }
 
-func (m *musicApiOrm) Update(db *gorm.DB, song *Song) error {
-	if err := db.Save(song).Error; err != nil {
+func (m *musicApiOrm) Update(db *gorm.DB, songID uint, song *Song) error {
+	if err := db.Model(&Song{}).Where("id = ?", songID).Updates(song).Error; err != nil {
 		return err
 	}
 	return nil

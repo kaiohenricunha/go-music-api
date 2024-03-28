@@ -43,18 +43,17 @@ func TestUpdateSong(t *testing.T) {
 	cfg := &config.Config{DB: db}
 
 	// Prepopulate the database with a test song
-	db.Create(&Song{Model: gorm.Model{ID: 1}, Name: "Old Name", Artist: "Old Artist"})
+	db.Create(&Song{Name: "Test Song", Artist: "Test Artist"})
 
 	// Update the song
-	updatedSong := &Song{Model: gorm.Model{ID: 1}, Name: "New Name", Artist: "New Artist"}
-	err := UpdateSong(cfg, updatedSong)
+	err := UpdateSong(cfg, 1, &Song{Name: "Updated Song", Artist: "Updated Artist"})
 	assert.NoError(t, err)
 
 	// Verify the song was updated
 	var song Song
 	db.First(&song, 1)
-	assert.Equal(t, "New Name", song.Name)
-	assert.Equal(t, "New Artist", song.Artist)
+	assert.Equal(t, "Updated Song", song.Name)
+	assert.Equal(t, "Updated Artist", song.Artist)
 }
 
 // TestDeleteSong tests deleting a song from the database

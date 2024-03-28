@@ -2,84 +2,68 @@
 
 ```plaintext
 .
-├── Dockerfile
 ├── README.md
-├── cli
+├── backend
+│   ├── Dockerfile
+│   ├── api
+│   │   └── server
+│   │       ├── handlers.go
+│   │       └── server.go
+│   ├── backend
+│   ├── config
+│   │   ├── config.go
+│   │   └── env
+│   ├── go.mod
+│   ├── go.sum
+│   ├── internal
+│   │   ├── db
+│   │   │   ├── db.go
+│   │   │   └── sql.sh
+│   │   └── musicapp
+│   │       ├── init.go
+│   │       ├── music_dao.go
+│   │       ├── music_methods.go
+│   │       ├── musicapp_test.go
+│   │       └── types.go
 │   └── main.go
-├── go.mod
-├── go.sum
-├── helm
-│   ├── Chart.yaml
-│   ├── customvalues.yaml
-│   ├── templates
-│   │   ├── NOTES.txt
-│   │   ├── _helpers.tpl
-│   │   ├── configmap-musicapi.yaml
-│   │   ├── deployment-musicapi.yaml
-│   │   ├── deployment-mysql.yaml
-│   │   ├── ns-musicapi.yaml
-│   │   ├── ns-mysql.yaml
-│   │   ├── pvc-mysql.yaml
-│   │   ├── secret-musicapi.yaml
-│   │   ├── secret-mysql.yaml
-│   │   ├── service-musicapi.yaml
-│   │   ├── service-mysql.yaml
-│   │   └── tests
-│   │       └── test-connection.yaml
-│   └── values.yaml
-├── manifests
-│   ├── musicapi
-│   │   ├── configmap-musicapi.yaml
-│   │   ├── deployment-musicapi.yaml
-│   │   ├── ns-musicapi.yaml
-│   │   ├── secret-musicapi.yaml
-│   │   └── service-musicapi.yaml
-│   └── mysql
-│       ├── deployment-mysql.yaml
-│       ├── ns-mysql.yaml
-│       ├── pvc-mysql.yaml
-│       ├── secret-mysql.yaml
-│       └── service-mysql.yaml
-└── pkg
-    ├── config
-    │   ├── config.go
-    │   └── env
-    ├── db
-    │   ├── db.go
-    │   └── sql.sh
-    ├── musicapp
-    │   ├── init.go
-    │   ├── music_dao.go
-    │   ├── music_methods.go
-    │   └── types.go
-    └── server
-        ├── handlers.go
-        └── server.go
+├── deploy
+│   ├── helm
+│   └── k8s
+│       ├── backend
+│       │   ├── musicapi
+│       │   │   ├── configmap-musicapi.yaml
+│       │   │   ├── deployment-musicapi.yaml
+│       │   │   ├── ns-musicapi.yaml
+│       │   │   ├── secret-musicapi.yaml
+│       │   │   └── service-musicapi.yaml
+│       │   └── mysql
+│       │       ├── deployment-mysql.yaml
+│       │       ├── ns-mysql.yaml
+│       │       ├── pvc-mysql.yaml
+│       │       ├── secret-mysql.yaml
+│       │       └── service-mysql.yaml
+│       └── frontend
+│           └── Work In Progress
+├── docker-compose.yaml
 ```
 
-## Descrição
+## Ambiente
 
-### Entrypoint
+O ambiente escolhido foi [Kubernetes](https://kubernetes.io/) através do [minikube](https://minikube.sigs.k8s.io/docs/start/).
 
-O entrypoint para nossa aplicação será `cli/main.go`.
-
-Aqui, temos uma função `init()` que irá:
-
-- inicializar a configuração do app
-- inicializar o banco de dados
-
-Confira a configuração do app. As mesmas credenciais de configuração serão fornecidas ao nosso app através do ConfigMap e Secret do k8s.
-
-```bash
-# env
-CONFIG_DBHOST # host do banco de dados
-CONFIG_DBNAME # nome do banco de dados
-CONFIG_DBPASS # senha do banco de dados
-CONFIG_DBUSER # usuário do banco de dados
-CONFIG_SERVER_PORT # porta do servidor web
+```
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-amd64
+sudo install minikube-darwin-amd64 /usr/local/bin/minikube
+minikube start
 ```
 
-Em seguida, ele executará a função main() que irá iniciar o servidor web Golang, com a configuração inicializada:
+A partir de então, podemos interagir com a aplicação através do [kubectl](https://kubernetes.io/docs/tasks/tools/).
+
+## Entrypoint
+
+O entrypoint para nossa aplicação será o `main.go` na raiz da pasta `backend`.
+
+Ela executará a função main() que irá iniciar o servidor web Golang:
 
 ```go
 var cfg *config.Config
@@ -105,9 +89,25 @@ func main() {
 }
 ```
 
-### Database
+Aqui, temos uma função `init()` que irá:
 
-Para simplificar, utilizei o GORM, um ORM para Go. Song será uma entidade em nosso banco de dados.
+- inicializar a configuração do app
+- inicializar o banco de dados
+
+Confira a configuração do app. As mesmas credenciais de configuração serão fornecidas ao nosso app através do ConfigMap e Secret do k8s.
+
+```bash
+# env
+CONFIG_DBHOST # host do banco de dados
+CONFIG_DBNAME # nome do banco de dados
+CONFIG_DBPASS # senha do banco de dados
+CONFIG_DBUSER # usuário do banco de dados
+CONFIG_SERVER_PORT # porta do servidor web
+```
+
+## Database
+
+Para simplificar, utilizei o GORM, um ORM para Go. Song será uma das entidades em nosso banco de dados.
 
 ```go
 type Song struct {
@@ -130,99 +130,59 @@ type Model struct {
 
 Essa estrutura permite a manipulação eficiente de registros de músicas no banco de dados, aproveitando as funcionalidades do GORM para operações CRUD, além de gerenciamento automático de campos comuns como ID, CreatedAt, UpdatedAt, e DeletedAt.
 
-### API
+## API
 
-Por enquanto, manteremos 2 endpoints da API em nossa aplicação, definidos em server/server.go.
+Nossa aplicação inclui um conjunto completo de endpoints CRUD para gerenciamento de músicas, definidos em server/server.go.
+
+### Endpoints
+
+- GET /api/v1/music: Busca todas as músicas no banco de dados.
+- POST /api/v1/music: Adiciona uma nova música ao banco de dados.
+- PUT /api/v1/music/{id}: Atualiza uma música existente pelo ID.
+- DELETE /api/v1/music/{id}: Remove uma música do banco de dados pelo ID.
+
+### Handlers
+
+Os handlers para cada operação estão implementados em `handlers.go`. A seguir, um resumo de cada um:
+
+- `GetSongHandler`: Realiza a busca de todas as músicas disponíveis e as retorna em formato JSON.
+- `PostSongHandler`: Recebe uma nova música em formato JSON, adiciona ao banco de dados e retorna uma mensagem de sucesso.
+- `UpdateSongHandler`: Atualiza os detalhes de uma música existente com base no ID fornecido e nos dados enviados. Retorna uma mensagem de sucesso após a atualização.
+- `DeleteSongHandler`: Remove uma música especificada pelo ID do banco de dados e retorna uma mensagem confirmando a remoção.
+
+### Server
+
+O servidor é configurado e iniciado em server.go, onde os endpoints são associados aos seus respectivos handlers e a aplicação começa a escutar em uma porta especificada.
 
 ```go
+package server
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/kaiohenricunha/go-music-k8s/backend/config"
+)
+
+var gcfg *config.Config // global config for server
+
+func Start(cfg *config.Config) {
+	gcfg = cfg
 	r := mux.NewRouter()
+
 	r.HandleFunc("/api/v1/music", GetSongHandler).Methods("GET")
 	r.HandleFunc("/api/v1/music", PostSongHandler).Methods("POST")
-```
+	r.HandleFunc("/api/v1/music/{id}", UpdateSongHandler).Methods("PUT")
+	r.HandleFunc("/api/v1/music/{id}", DeleteSongHandler).Methods("DELETE")
 
-- O método GET buscará todas as músicas do banco de dados.
-- O método POST adicionará uma nova música ao banco de dados.
-
-Ambos os endpoints utilizarão o mesmo caminho /api/v1/music.
-
-O GetSongHandler consulta simplesmente todas as músicas e as retorna.
-
-```go
-func GetSongHandler(w http.ResponseWriter, r *http.Request) {
-	log.Print("GET /api/v1/music")
-
-	// buscar músicas
-	songs, err := musicapp.GetAllSongs(gcfg)
-	if err != nil {
-		log.Print("Falha na API de buscar músicas", err.Error())
-		w.Write([]byte("Erro ao obter músicas!"))
-		return
-	}
-
-	// resposta
-	json.NewEncoder(w).Encode(songs)
-}
-```
-
-O PostSongHandler adiciona uma nova música ao banco de dados.
-
-```go
-func PostSongHandler(w http.ResponseWriter, r *http.Request) {
-	log.Print("POST /api/v1/music")
-
-	// adicionar música
-	newsong := musicapp.Song{}
-	json.NewDecoder(r.Body).Decode(&newsong)
-
-	err := musicapp.PostSong(gcfg, &newsong)
-	if err != nil {
-		log.Print("Falha na API de adicionar música", err.Error())
-		w.Write([]byte("Erro ao publicar música!"))
-		return
-	}
-
-	// resposta
-	w.Write([]byte("Nova música publicada!"))
-}
-```
-
-Os métodos correspondentes do DAO de banco de dados estão definidos em music_dao.go.
-
-```go
-type musicDaoInterface interface {
-	Get(db *gorm.DB) ([]*Song, error)
-	Post(db *gorm.DB, song *Song) error
-}
-
-type musicApiOrm struct {
-}
-
-func NewMusicOrm() musicDaoInterface {
-	return &musicApiOrm{}
-}
-
-func (m *musicApiOrm) Get(db *gorm.DB) ([]*Song, error) {
-	songsArr := make([]*Song, 0)
-	if err := db.Model(&Song{}).Find(&songsArr).Error; err != nil {
-		return nil, err
-	}
-	log.Printf("%d linhas encontradas", len(songsArr))
-
-	return songsArr, nil
-}
-
-func (m *musicApiOrm) Post(db *gorm.DB, song *Song) error {
-	if err := db.Session(&gorm.Session{FullSaveAssociations: true, CreateBatchSize: CreateBatchSizeDefault}).Model(Song{}).Create(song).Error; err != nil {
-		return err
-	}
-
-	return nil
+	log.Fatal(http.ListenAndServe(":"+cfg.ServerPort, r))
 }
 ```
 
 ## Unit Tests
 
-Para testar a aplicação, utilizaremos o pacote `testing` do Go.
+Cada método em musicapp.go tem um teste unitário correspondente em musicapp_test.go. Aqui está um exemplo de teste unitário para o método PostSong:
 
 ```go
 package musicapp
@@ -248,34 +208,78 @@ func TestPostSong(t *testing.T) {
 }
 ```
 
-In the pkg/musicapp/musicapp_test.go file, we have a test function for each of the operations in the musicapp API. To run the tests, execute the following command:
+Para executar os testes, execute o seguinte comando:
 
 ```bash
-go test ./pkg/musicapp
+go test ./internal/musicapp
 ```
 
-You should see the following output:
+O resultado deve ser algo como:
 
 ```bash
 go test
 2024/03/25 00:57:26 2 rows found
 PASS
-ok      github.com/kaiohenricunha/go-music-k8s/pkg/musicapp     0.496s
+ok      github.com/kaiohenricunha/go-music-k8s/internal/musicapp  0.004s
 ```
+
+Se houver algum erro, o teste falhará e exibirá uma mensagem de erro.
+
+## Banco de Dados MySQL
+
+O app de música utiliza o GORM, um ORM (Object-Relational Mapping) para Go, facilitando as operações de banco de dados com abstrações de alto nível. A configuração e gerenciamento do banco de dados são realizados através de múltiplos arquivos, que juntos, definem a inicialização, as operações CRUD e a configuração da conexão com o banco de dados.
+
+### Inicialização(init.go)
+
+`DbInit(db *gorm.DB) error`
+
+Inicializa o esquema do banco de dados com base no modelo Song e semeia dados iniciais se necessário. Este processo envolve:
+
+- A migração do esquema usando db.AutoMigrate(&Song{}).
+- A verificação da existência de dados e, caso o banco de dados esteja vazio, a inserção de dados iniciais através da função seedData(db).
+
+`seedData(db *gorm.DB) error`
+
+- Popula o banco de dados com um conjunto inicial de músicas, caso esteja vazio. Esta função insere músicas de artistas como Linkin Park, Michael Jackson, Queen, entre outros.
+
+Get: Busca todas as músicas existentes no banco de dados.
+Post: Adiciona uma nova música ao banco de dados.
+Update: Atualiza uma música existente identificada pelo ID.
+Delete: Remove uma música do banco de dados pelo ID.
+
+### Configuração(config.go) e conexão(db.go)
+
+`NewConfig() (*Config, error)`
+
+- Inicializa a configuração do app, lendo as variáveis de ambiente e retornando um ponteiro para a estrutura Config.
+- As variáveis de ambiente são lidas e atribuídas a campos correspondentes na estrutura Config.
+- Retorna um erro se alguma variável de ambiente estiver faltando ou se a conversão de tipo falhar.
+- Retorna um ponteiro para a estrutura Config.
+
+`InitDB(dsn string) *gorm.DB`
+
+Estabelece a conexão com o banco de dados MySQL, criando o banco de dados se ele não existir. A função:
+
+- Extrai o nome do banco de dados do DSN (Data Source Name).
+- Conecta-se ao MySQL sem especificar um banco de dados, para verificar ou criar o banco de dados necessário.
+- Configura o pool de conexões com parâmetros específicos para conexões ociosas e máximas abertas.
+
+### Tipos(types.go)
+
+Define a estrutura Song, que representa uma música no banco de dados. A estrutura inclui campos como ID, Name, Artist, CreatedAt, UpdatedAt e DeletedAt.
+
+### Operações CRUD(music_dao.go)
+
+Define a interface `musicDaoInterface` e a implementação `musicApiOrm`, realizando as operações CRUD:
+
+- Get: Busca todas as músicas existentes no banco de dados.
+- Post: Adiciona uma nova música ao banco de dados.
+- Update: Atualiza uma música existente identificada pelo ID.
+- Delete: Remove uma música do banco de dados pelo ID.
 
 ## Deployment
 
-O ambiente escolhido foi [Kubernetes](https://kubernetes.io/) através do [minikube](https://minikube.sigs.k8s.io/docs/start/).
-
-```
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-amd64
-sudo install minikube-darwin-amd64 /usr/local/bin/minikube
-minikube start
-```
-
-A partir de então, podemos interagir com a aplicação através do [kubectl](https://kubernetes.io/docs/tasks/tools/).
-
-### mysql
+### MySQL
 
 O banco de dados MySQL ficará em um namespace chamado `db-ns`.
 
@@ -375,17 +379,7 @@ metadata:
 echo -n "senha-escolhida" | base64
 ```
 
-Precisaremos também de uma forma de passar todas as variáveis de ambiente para o nosso app. Para isso, utilizaremos um ConfigMap.
-
-```bash
-> kubectl create configmap music-cm -n music-ns 
---from-literal serverport=8081 
---from-literal dbuser=root 
---from-literal dbname=infnet_music_db 
---dry-run -oyaml > manifests/mysql/configmap.yaml
-```
-
-Finalmente, podemos implantar a aplicação de música no cluster minikube com a imagem `kaiohenricunha/musicapi:1.0.0` que geramos.
+Finalmente, podemos implantar a aplicação de música no cluster minikube com a imagem `kaiohenricunha/musicapi:latest` que geramos.
 
 ```yaml
 apiVersion: apps/v1
@@ -406,12 +400,12 @@ spec:
         app: musicapi
     spec:
       containers:
-      - image: kaiohenricunha/go-music-k8s:1.0.0
+      - image: kaiohenricunha/go-music-k8s:latest
         name: go-music-k8s
         resources:
           limits:
-            cpu: 100m
-            memory: 100Mi
+            cpu: 500m
+            memory: 500Mi
           requests:
             cpu: 100m
             memory: 100Mi
@@ -445,7 +439,7 @@ spec:
 
 É o deployment que não só cria o pod com a aplicação, mas também a associa com todos os componentes necessários, como ConfigMap, Secret e Service.
 
-Com tudo pronto, podemos verificar se a aplicação de música foi implantada com sucesso.
+Com tudo pronto, podemos verificar se a API de música foi implantada com sucesso.
 
 ```bash
 kubectl apply -f manifests/musicapi
@@ -453,102 +447,109 @@ kubectl apply -f manifests/musicapi
 
 ```bash
 kubectl get pods -A
-NAMESPACE     NAME                               READY   STATUS             RESTARTS       AGE
-db-ns         mysql-698ff8f95d-4qvfw             1/1     Running            0              67s
-kube-system   coredns-5dd5756b68-nhwfg           1/1     Running            0              40m
-kube-system   etcd-minikube                      1/1     Running            0              40m
-kube-system   kube-apiserver-minikube            1/1     Running            0              40m
-kube-system   kube-controller-manager-minikube   1/1     Running            1 (40m ago)    40m
-kube-system   kube-proxy-m6jbs                   1/1     Running            0              40m
-kube-system   kube-scheduler-minikube            1/1     Running            0              40m
-kube-system   storage-provisioner                1/1     Running            1 (39m ago)    40m
-music-ns      musicapi-78b9f69c4d-qvs9z          0/1     CrashLoopBackOff   5 (98s ago)    5m26s
-music-ns      musicapi-7d4c877f5d-54m4j          0/1     CrashLoopBackOff   5 (110s ago)   6m29s
+NAMESPACE     NAME                               READY   STATUS    RESTARTS        AGE
+db-ns         mysql-698ff8f95d-g2bn2             1/1     Running   0               122m
+kube-system   coredns-5dd5756b68-nhwfg           1/1     Running   0               2d21h
+kube-system   etcd-minikube                      1/1     Running   0               2d21h
+kube-system   kube-apiserver-minikube            1/1     Running   7 (23h ago)     2d21h
+kube-system   kube-controller-manager-minikube   1/1     Running   1 (2d21h ago)   2d21h
+kube-system   kube-proxy-m6jbs                   1/1     Running   0               2d21h
+kube-system   kube-scheduler-minikube            1/1     Running   0               2d21h
+kube-system   storage-provisioner                1/1     Running   19 (177m ago)   2d21h
+music-ns      musicapi-5bc9c67b5b-62p76          1/1     Running   0               96m
 ```
 
-Como podemos ver, o pod musicapi-78b9f69c4d-qvs9z está em CrashLoopBackOff. Ao investigar o log do pod, podemos ver que o motivo é que o pod não consegue se conectar ao banco de dados.
+Com o banco de dados criado e a aplicação de música implantada, podemos verificar os logs da aplicação e verificar se ela está funcionando corretamente.
 
 ```bash
-kubectl logs musicapi-78b9f69c4d-qvs9z -n music-ns
-2024/03/25 23:07:02 Welcome to music api...
-2024/03/25 23:07:02 failed to connect to databaseError 1049 (42000): Unknown database 'infnet_music_db'
-
-2024/03/25 23:07:02 /go/pkg/mod/github.com/!jana!sabuj/music-api-k8s@v0.0.0-20230401103529-67db1fbe644c/pkg/db/db.go:11
-[error] failed to initialize database, got error Error 1049 (42000): Unknown database 'infnet_music_db'
-```
-
-Isso ocorre porque o banco de dados não foi criado explicitamente. Para corrigir isso, podemos acessar o pod mysql e criar o banco de dados manualmente. Para tal, é necessário "entrar" no pod mysql.
-
-```bash
-kubectl get pods -n db-ns 
-NAME                     READY   STATUS    RESTARTS   AGE
-mysql-698ff8f95d-4qvfw   1/1     Running   0          11m
-```
-
-```bash
-kubectl exec -it -n db-ns mysql-698ff8f95d-4qvfw -- bash
-bash-4.4# ls
-bin  boot  dev  docker-entrypoint-initdb.d  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
-bash-4.4# 
-```
-
-Dentro do pod, podemos acessar o MySQL com o comando `mysql -u root -p` e criar o banco de dados.
-
-```bash
-bash-4.4# mysql -u root -p
-Enter password: 
-Welcome to the MySQL monitor.  Commands end with ; or \g.
-Your MySQL connection id is 14
-Server version: 8.3.0 MySQL Community Server - GPL
-
-Copyright (c) 2000, 2024, Oracle and/or its affiliates.
-
-Oracle is a registered trademark of Oracle Corporation and/or its
-affiliates. Other names may be trademarks of their respective
-owners.
-
-Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
-
-mysql> 
-```
-
-Finalmente, devemos executar os comandos SQL para criar o banco de dados e a tabela.
-
-```sql
-mysql> create database infnet_music_db;
-Query OK, 1 row affected (0.02 sec)
-
-mysql> use infnet_music_db;
-Database changed
-
-mysql> INSERT INTO songs (created_at, updated_at, name, artist) VALUES (now(), now(), "Borbulhas de Amor", "Fagner");
-Query OK, 1 row affected (0.04 sec)
-```
-
-```sql
-mysql> select * from songs;
-+----+---------------------+---------------------+------------+-------------------+---------------------+
-| id | created_at          | updated_at          | deleted_at | name              | artist              |
-+----+---------------------+---------------------+------------+-------------------+---------------------+
-|  1 | 2024-03-25 23:17:32 | 2024-03-25 23:17:32 | NULL       | Burn It Down      | Linkin Park         |
-|  2 | 2024-03-25 23:17:40 | 2024-03-25 23:17:40 | NULL       | Earth Song        | Michael Jackson     |
-|  3 | 2024-03-25 23:17:48 | 2024-03-25 23:17:48 | NULL       | Hey Jude          | The Beatles         |
-|  4 | 2024-03-25 23:17:55 | 2024-03-25 23:17:55 | NULL       | Sound of Silence  | Simon and Garfunkel |
-|  5 | 2024-03-25 23:18:02 | 2024-03-25 23:18:02 | NULL       | Hotel California  | The Eagles          |
-|  6 | 2024-03-25 23:18:13 | 2024-03-25 23:18:13 | NULL       | Comfortably Numb  | Pink Floyd          |
-|  7 | 2024-03-25 23:18:38 | 2024-03-25 23:18:38 | NULL       | Borbulhas de Amor | Fagner              |
-+----+---------------------+---------------------+------------+-------------------+---------------------+
-7 rows in set (0.00 sec)
-
-mysql> 
-```
-
-Com o banco de dados criado, o pod musicapi deve ser reiniciado automaticamente e, desta vez, ele deve ser capaz de se conectar ao banco de dados.
-
-```bash
-kubectl logs -f musicapi-78b9f69c4d-qvs9z -n music-ns
+kubectl logs -f musicapi-5bc9c67b5b-62p76 -n music-ns
 2024/03/25 23:17:10 Welcome to music api...
 ```
+
+### Testando a API
+
+Além de Unit Tests, podemos testar a API implantada no cluster minikube usando Postman.
+
+Para testar a API, podemos encaminhar a porta do pod musicapi para o host local.
+
+```bash
+kubectl port-forward -n music-ns svc/musicapi 8081
+Forwarding from 127.0.0.1:8081 -> 8081
+Forwarding from [::1]:8081 -> 8081
+```
+
+Com o Postman ou curl, podemos testar a API.
+
+![postman](./images/GET_request.png)
+
+Depois que todos os metodos CRUD forem testados e validados, podemos implantar o seguir para o próximo passo de autenticar usuários e proteger a API.
+
+### Bonus
+
+Para autoscalar a aplicação, podemos usar o Horizontal Pod Autoscaler (HPA) para ajustar o número de pods em execução com base na utilização da CPU.
+
+Para isso, precisamos primeiro instalar o métrica-server no minikube.
+
+```bash
+minikube addons enable metrics-server
+```
+
+```bash
+kubectl -n kube-system rollout status deployment metrics-server
+```
+
+Para verificar se o métrica-server está funcionando corretamente, podemos executar o seguinte comando.
+
+```bash
+kubectl top pods -A
+NAMESPACE     NAME                               CPU(cores)   MEMORY(bytes)   
+db-ns         mysql-698ff8f95d-g2bn2             12m          380Mi           
+kube-system   coredns-5dd5756b68-nhwfg           4m           13Mi            
+kube-system   etcd-minikube                      32m          87Mi            
+kube-system   kube-apiserver-minikube            83m          218Mi           
+kube-system   kube-controller-manager-minikube   35m          42Mi            
+kube-system   kube-proxy-m6jbs                   1m           12Mi            
+kube-system   kube-scheduler-minikube            4m           23Mi            
+kube-system   metrics-server-7c66d45ddc-jtcfg    5m           12Mi            
+kube-system   storage-provisioner                3m           8Mi             
+music-ns      musicapi-5bc9c67b5b-62p76          1m           2Mi
+```
+
+Com o métrica-server funcionando corretamente, podemos criar um HPA para a aplicação de música.
+
+```yaml
+kubectl autoscale deployment musicapi -n music-ns --cpu-percent=450 --min=1 --max=10 -n music-ns --dry-run=client -o yaml
+```
+
+```yaml
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  creationTimestamp: null
+  name: musicapi
+spec:
+  maxReplicas: 10
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: musicapi
+  targetCPUUtilizationPercentage: 450
+```
+
+After some time, we can check the status of the HPA.
+
+```bash
+kubectl get hpa -A                                                              
+NAMESPACE   NAME       REFERENCE             TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+music-ns    musicapi   Deployment/musicapi   1%/450%   1         10        1          3m42s
+```
+
+## Autenticando Usuários
+
+Para proteger a API, podemos adicionar autenticação de usuário. Para isso, podemos usar JWT (JSON Web Token) para autenticar usuários.
+
+
 
 ## Frontend em React
 

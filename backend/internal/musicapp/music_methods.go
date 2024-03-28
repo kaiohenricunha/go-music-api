@@ -1,8 +1,9 @@
 package musicapp
 
 import (
-	"github.com/kaiohenricunha/go-music-k8s/backend/config"
 	"log"
+
+	"github.com/kaiohenricunha/go-music-k8s/backend/config"
 )
 
 var musicOrm = NewMusicOrm()
@@ -29,11 +30,12 @@ func PostSong(cfg *config.Config, newsong *Song) error {
 	return nil
 }
 
-// Atualizar uma música existente
-func UpdateSong(cfg *config.Config, song *Song) error {
-	err := musicOrm.Update(cfg.DB, song)
+// UpdateSong updates an existing song by ID
+func UpdateSong(cfg *config.Config, id uint, updatedSong *Song) error {
+	// No need to manually update fields if the Updates method is used correctly
+	err := musicOrm.Update(cfg.DB, id, updatedSong)
 	if err != nil {
-		log.Print("error updating song in DB", err.Error())
+		log.Printf("Error updating song: %v", err)
 		return err
 	}
 
