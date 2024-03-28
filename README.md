@@ -545,12 +545,44 @@ NAMESPACE   NAME       REFERENCE             TARGETS   MINPODS   MAXPODS   REPLI
 music-ns    musicapi   Deployment/musicapi   1%/450%   1         10        1          3m42s
 ```
 
-## Autenticando Usuários
+## Autenticação de Usuário e Novos Modelos de Dados
 
-Para proteger a API, podemos adicionar autenticação de usuário. Para isso, podemos usar JWT (JSON Web Token) para autenticar usuários.
+Os proximos passos incluem a adição de autenticação de usuário e a criação de novos modelos de dados para a aplicação. A autenticação de usuário pode ser feita usando JWT (JSON Web Token), enquanto os novos modelos de dados podem incluir entidades como User e Playlist.
 
+A aplicação também contará com um modelo de Rating, que permitirá aos usuários avaliar playlists de outros usuários numa escala de 1 a 5 estrelas.
 
+### User e Playlist Models
 
-## Frontend em React
+WIP
+
+### Database Migration
+
+WIP
+
+### User Registration
+
+WIP
+
+### User Login
+
+WIP
+
+### Playlist Management
+
+WIP
+
+### Rating Functionality
+
+WIP
+
+### Secure and Route Endpoints
+
+WIP
+
+### Testing
+
+WIP
+
+## React Frontend
 
 WIP
