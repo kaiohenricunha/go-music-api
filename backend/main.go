@@ -21,13 +21,15 @@ func main() {
 	// Setup DAOs with the database connection
 	userDAO := dao.NewGormDAO(db)
 	songDAO := dao.NewGormDAO(db)
+	playlistDAO := dao.NewGormDAO(db)
 
 	// Setup Services with the DAOs
 	userService := service.NewUserService(userDAO)
 	songService := service.NewSongService(songDAO)
+	playlistService := service.NewPlaylistService(playlistDAO)
 
 	// Setup API routes with the services
-	router := routes.SetupRoutes(userService, songService)
+	router := routes.SetupRoutes(userService, songService, playlistService)
 
 	// Start the server
 	log.Printf("Starting server on port %s", cfg.ServerPort)

@@ -16,17 +16,52 @@ func NewGormDAO(db *gorm.DB) *GormDAO {
 	return &GormDAO{DB: db}
 }
 
-// CreateUser inserts a new user into the database.
+var (
+	ErrUserNotFound = errors.New("user not found")
+	ErrSongNotFound = errors.New("song not found")
+)
+
+// CreateUser checks for a soft-deleted user with the same username and permanently deletes it before creating a new one.
 func (g *GormDAO) CreateUser(user *model.User) error {
+	var existingUser model.User
+	// Check for a soft-deleted user with the same username.
+	result := g.DB.Unscoped().Where("username = ?", user.Username).First(&existingUser)
+	if result.Error == nil && existingUser.DeletedAt.Valid {
+		// If a soft-deleted record exists, permanently delete it to free up the username.
+		if err := g.DB.Unscoped().Delete(&existingUser).Error; err != nil {
+			return err
+		}
+	} else if result.Error != gorm.ErrRecordNotFound {
+		return result.Error
+	}
+
 	return g.DB.Create(user).Error
 }
 
 // UpdateUser updates an existing user's information in the database.
 func (g *GormDAO) UpdateUser(user *model.User) error {
-	return g.DB.Save(user).Error
+	var existingUser model.User
+	result := g.DB.Where("id = ?", user.ID).First(&existingUser)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return ErrUserNotFound
+	}
+
+	// Update the user with new values where applicable
+	if user.Username != "" {
+		existingUser.Username = user.Username
+	}
+
+	// The password field should already be hashed if it was updated,
+	// as handled in the UserService.UpdateUser method.
+	if user.Password != "" {
+		existingUser.Password = user.Password
+	}
+
+	// Save updates
+	return g.DB.Save(&existingUser).Error
 }
 
-// DeleteUser removes a user from the database by ID.
+// DeleteUser leverages GORM's soft delete functionality, which is automatically applied if the model includes a `DeletedAt` field.
 func (g *GormDAO) DeleteUser(userID uint) error {
 	return g.DB.Delete(&model.User{}, userID).Error
 }
@@ -52,7 +87,7 @@ func (g *GormDAO) CreateSong(song *model.Song) error {
 
 // UpdateSong updates an existing song's information in the database.
 func (g *GormDAO) UpdateSong(song *model.Song) error {
-	return g.DB.Save(song).Error
+	return g.DB.Model(&model.Song{}).Where("id = ?", song.ID).Updates(song).Error
 }
 
 // DeleteSong removes a song from the database by ID.
@@ -74,4 +109,64 @@ func (g *GormDAO) FindSongByName(songName string) (*model.Song, error) {
 		return nil, nil
 	}
 	return &song, err
+}
+
+func (g *GormDAO) FindSongByID(songID uint) (*model.Song, error) {
+	var song model.Song
+	err := g.DB.Where("id = ?", songID).First(&song).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &song, err
+}
+
+func (g *GormDAO) CreatePlaylist(playlist *model.Playlist) error {
+	return g.DB.Create(playlist).Error
+}
+
+func (g *GormDAO) UpdatePlaylist(playlist *model.Playlist) error {
+	return g.DB.Model(&model.Playlist{}).Where("id = ?", playlist.ID).Updates(playlist).Error
+}
+
+func (g *GormDAO) DeletePlaylist(playlistID uint) error {
+	return g.DB.Delete(&model.Playlist{}, playlistID).Error
+}
+
+func (g *GormDAO) GetAllPlaylists() ([]model.Playlist, error) {
+	var playlists []model.Playlist
+	err := g.DB.Find(&playlists).Error
+	return playlists, err
+}
+
+// GetPlaylistByID retrieves a playlist by its ID
+func (g *GormDAO) GetPlaylistByID(id uint) (*model.Playlist, error) {
+	var playlist model.Playlist
+	result := g.DB.Preload("Songs").First(&playlist, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &playlist, nil
+}
+
+func (g *GormDAO) GetPlaylistsByUserID(userID uint) ([]model.Playlist, error) {
+	var playlists []model.Playlist
+	err := g.DB.Where("user_id = ?", userID).Find(&playlists).Error
+	return playlists, err
+}
+
+func (g *GormDAO) GetPlaylistByName(userID uint, playlistName string) (*model.Playlist, error) {
+	var playlist model.Playlist
+	err := g.DB.Where("user_id = ? AND name = ?", userID, playlistName).First(&playlist).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &playlist, err
+}
+
+func (g *GormDAO) AddSongToPlaylist(playlistID, songID uint) error {
+	return g.DB.Exec("INSERT INTO playlist_songs (playlist_id, song_id) VALUES (?, ?)", playlistID, songID).Error
+}
+
+func (g *GormDAO) RemoveSongFromPlaylist(playlistID, songID uint) error {
+	return g.DB.Exec("DELETE FROM playlist_songs WHERE playlist_id = ? AND song_id = ?", playlistID, songID).Error
 }

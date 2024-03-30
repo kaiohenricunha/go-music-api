@@ -52,11 +52,21 @@ func (h *SongHandlers) GetAllSongs(w http.ResponseWriter, r *http.Request) {
 
 // UpdateSong handles PUT requests to update a song.
 func (h *SongHandlers) UpdateSong(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	songID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		api.LogErrorWithDetails(w, "Invalid song ID", err, http.StatusBadRequest)
+		return
+	}
+
 	var song model.Song
 	if err := json.NewDecoder(r.Body).Decode(&song); err != nil {
 		api.LogErrorWithDetails(w, "Invalid request body", err, http.StatusBadRequest)
 		return
 	}
+
+	// Set the ID on the song object from the URL parameter
+	song.ID = uint(songID)
 
 	if err := h.songService.UpdateSong(&song); err != nil {
 		api.LogErrorWithDetails(w, "Failed to update song", err, http.StatusInternalServerError)

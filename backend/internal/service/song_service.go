@@ -50,15 +50,11 @@ func (s *songService) GetAllSongs() ([]model.Song, error) {
 }
 
 func (s *songService) UpdateSong(song *model.Song) error {
-	if song.Name == "" {
+	if song.Name == "" || song.Artist == "" {
 		return ErrSongNameRequired
 	}
 
-	existingSong, err := s.songDAO.FindSongByName(song.Name)
-	if err != nil || existingSong == nil {
-		return ErrSongNotFound
-	}
-
+	// Directly use the song ID to update the song. There's no need to find the song by name here.
 	return s.songDAO.UpdateSong(song)
 }
 

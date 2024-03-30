@@ -1,11 +1,18 @@
 package middleware
 
 import (
+	"context"
 	"encoding/base64"
-	"github.com/kaiohenricunha/go-music-k8s/backend/internal/service"
 	"net/http"
 	"strings"
+
+	"github.com/kaiohenricunha/go-music-k8s/backend/internal/service"
 )
+
+// Define a custom type for context keys to avoid collisions
+type contextKey string
+
+const userContextKey contextKey = "userID"
 
 func BasicAuthMiddleware(userService service.UserService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -17,15 +24,28 @@ func BasicAuthMiddleware(userService service.UserService) func(http.Handler) htt
 				return
 			}
 
-			payload, _ := base64.StdEncoding.DecodeString(strings.TrimPrefix(authHeader, "Basic "))
-			pair := strings.SplitN(string(payload), ":", 2)
+			encodedPayload := strings.TrimPrefix(authHeader, "Basic ")
+			payload, err := base64.StdEncoding.DecodeString(encodedPayload)
+			if err != nil {
+				http.Error(w, "Invalid authorization format", http.StatusBadRequest)
+				return
+			}
 
-			if len(pair) != 2 || !userService.ValidateUser(pair[0], pair[1]) {
+			pair := strings.SplitN(string(payload), ":", 2)
+			if len(pair) != 2 {
+				http.Error(w, "Invalid authorization format", http.StatusBadRequest)
+				return
+			}
+
+			userID, valid := userService.ValidateUser(pair[0], pair[1])
+			if !valid {
 				http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 				return
 			}
 
-			next.ServeHTTP(w, r)
+			// Use the custom type for the context key
+			ctx := context.WithValue(r.Context(), userContextKey, userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
