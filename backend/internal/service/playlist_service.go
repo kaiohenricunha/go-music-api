@@ -2,17 +2,14 @@ package service
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/dao"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
 )
 
 type PlaylistService interface {
-	CreatePlaylist(authenticatedUserID uint, playlist *model.Playlist) error
-	AddSongToPlaylist(playlistID, songID uint) error
-	RemoveSongFromPlaylist(playlistID, songID uint) error
-	GetPlaylistsByUserID(userID uint) ([]model.Playlist, error)
-	DeletePlaylist(playlistID uint) error
+	CreatePlaylist(playlist *model.Playlist) error
 }
 
 type playlistService struct {
@@ -23,38 +20,24 @@ func NewPlaylistService(musicDAO dao.MusicDAO) PlaylistService {
 	return &playlistService{musicDAO: musicDAO}
 }
 
-func (s *playlistService) CreatePlaylist(authenticatedUserID uint, playlist *model.Playlist) error {
-	// Check if the playlist name is empty
+var (
+	ErrPlaylistAlreadyExists = errors.New("playlist already exists for this user")
+	ErrUserDoesNotExist      = errors.New("user does not exist")
+)
+
+func (s *playlistService) CreatePlaylist(playlist *model.Playlist) error {
 	if playlist.Name == "" {
-		return errors.New("playlist name is required")
+		return errors.New("playlist name cannot be empty")
 	}
 
-	// Check if the playlist already exists
-	existingPlaylist, err := s.musicDAO.GetPlaylistByName(authenticatedUserID, playlist.Name)
+	existingPlaylist, err := s.musicDAO.GetPlaylistByNameAndUserID(playlist.Name, playlist.UserID)
 	if err != nil {
-		return err
+		return fmt.Errorf("error checking for existing playlist: %w", err)
 	}
 	if existingPlaylist != nil {
-		return errors.New("playlist already exists")
+		return errors.New("playlist already exists for this user")
 	}
 
-	// Create the playlist
+	// Proceed with creation if existingPlaylist is nil
 	return s.musicDAO.CreatePlaylist(playlist)
-}
-
-func (s *playlistService) AddSongToPlaylist(playlistID, songID uint) error {
-	return s.musicDAO.AddSongToPlaylist(playlistID, songID)
-}
-
-func (s *playlistService) RemoveSongFromPlaylist(playlistID, songID uint) error {
-	// Similarly, check if the playlist and song exist and if the song is actually in the playlist
-	return s.musicDAO.RemoveSongFromPlaylist(playlistID, songID)
-}
-
-func (s *playlistService) GetPlaylistsByUserID(userID uint) ([]model.Playlist, error) {
-	return s.musicDAO.GetPlaylistsByUserID(userID)
-}
-
-func (s *playlistService) DeletePlaylist(playlistID uint) error {
-	return s.musicDAO.DeletePlaylist(playlistID)
 }

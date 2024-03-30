@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/kaiohenricunha/go-music-k8s/backend/api"
+	"github.com/kaiohenricunha/go-music-k8s/backend/api/middleware"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/service"
 )
@@ -23,20 +24,25 @@ func NewPlaylistHandlers(playlistService service.PlaylistService) *PlaylistHandl
 
 // CreatePlaylist handles POST requests to create a new playlist.
 func (h *PlaylistHandlers) CreatePlaylist(w http.ResponseWriter, r *http.Request) {
+	// Decode request body
 	var playlist model.Playlist
 	if err := json.NewDecoder(r.Body).Decode(&playlist); err != nil {
 		api.LogErrorWithDetails(w, "Invalid request body", err, http.StatusBadRequest)
 		return
 	}
 
-	// get the authenticated user ID from the request content
-	authUserID, ok := r.Context().Value("userID").(uint)
+	// Get authenticated user ID from context
+	authUserID, ok := r.Context().Value(middleware.UserContextKey).(uint)
 	if !ok {
 		api.LogErrorWithDetails(w, "Failed to get authenticated user ID", nil, http.StatusInternalServerError)
 		return
 	}
 
-	if err := h.playlistService.CreatePlaylist(authUserID, &playlist); err != nil {
+	// Set the UserID for the playlist to the authenticated user's ID
+	playlist.UserID = authUserID
+
+	// Attempt to create the playlist
+	if err := h.playlistService.CreatePlaylist(&playlist); err != nil {
 		api.LogErrorWithDetails(w, "Failed to create playlist", err, http.StatusInternalServerError)
 		return
 	}

@@ -61,6 +61,16 @@ func (g *GormDAO) UpdateUser(user *model.User) error {
 	return g.DB.Save(&existingUser).Error
 }
 
+// FindUserByID retrieves a single user by ID.
+func (g *GormDAO) FindUserByID(userID uint) (*model.User, error) {
+	var user model.User
+	err := g.DB.Where("id = ?", userID).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrUserNotFound
+	}
+	return &user, err
+}
+
 // DeleteUser leverages GORM's soft delete functionality, which is automatically applied if the model includes a `DeletedAt` field.
 func (g *GormDAO) DeleteUser(userID uint) error {
 	return g.DB.Delete(&model.User{}, userID).Error
@@ -154,13 +164,24 @@ func (g *GormDAO) GetPlaylistsByUserID(userID uint) ([]model.Playlist, error) {
 	return playlists, err
 }
 
-func (g *GormDAO) GetPlaylistByName(userID uint, playlistName string) (*model.Playlist, error) {
+func (g *GormDAO) GetPlaylistByName(playlistName string) (*model.Playlist, error) {
 	var playlist model.Playlist
-	err := g.DB.Where("user_id = ? AND name = ?", userID, playlistName).First(&playlist).Error
+	err := g.DB.Where("name = ?", playlistName).First(&playlist).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	return &playlist, err
+}
+
+func (dao *GormDAO) GetPlaylistByNameAndUserID(name string, userID uint) (*model.Playlist, error) {
+	var playlist model.Playlist
+	if err := dao.DB.Where("name = ? AND user_id = ?", name, userID).First(&playlist).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &playlist, nil
 }
 
 func (g *GormDAO) AddSongToPlaylist(playlistID, songID uint) error {

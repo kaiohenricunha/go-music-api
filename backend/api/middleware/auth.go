@@ -10,9 +10,10 @@ import (
 )
 
 // Define a custom type for context keys to avoid collisions
-type contextKey string
+type ContextKey string
 
-const userContextKey contextKey = "userID"
+// Export UserContextKey by capitalizing its first letter
+const UserContextKey ContextKey = "userID"
 
 func BasicAuthMiddleware(userService service.UserService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -43,8 +44,8 @@ func BasicAuthMiddleware(userService service.UserService) func(http.Handler) htt
 				return
 			}
 
-			// Use the custom type for the context key
-			ctx := context.WithValue(r.Context(), userContextKey, userID)
+			// Use the exported UserContextKey
+			ctx := context.WithValue(r.Context(), UserContextKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

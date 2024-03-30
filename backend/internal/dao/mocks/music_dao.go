@@ -52,6 +52,29 @@ func (_m *MusicDAO) DeleteUser(userID uint) error {
 	return r0
 }
 
+// FindUserByID mocks the FindUserByID method
+func (_m *MusicDAO) FindUserByID(userID uint) (*model.User, error) {
+	ret := _m.Called(userID)
+
+	var r0 *model.User
+	if rf, ok := ret.Get(0).(func(uint) *model.User); ok {
+		r0 = rf(userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.User)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetAllUsers mocks the GetAllUsers method
 func (_m *MusicDAO) GetAllUsers() ([]model.User, error) {
 	ret := _m.Called()
@@ -349,12 +372,12 @@ func (_m *MusicDAO) RemoveSongFromPlaylist(playlistID, songID uint) error {
 }
 
 // GetPlaylistByName mocks the GetPlaylistByName method
-func (_m *MusicDAO) GetPlaylistByName(userID uint, playlistName string) (*model.Playlist, error) {
-	ret := _m.Called(userID, playlistName)
+func (_m *MusicDAO) GetPlaylistByName(playlistName string) (*model.Playlist, error) {
+	ret := _m.Called(playlistName)
 
 	var r0 *model.Playlist
-	if rf, ok := ret.Get(0).(func(uint, string) *model.Playlist); ok {
-		r0 = rf(userID, playlistName)
+	if rf, ok := ret.Get(0).(func(string) *model.Playlist); ok {
+		r0 = rf(playlistName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Playlist)
@@ -362,8 +385,31 @@ func (_m *MusicDAO) GetPlaylistByName(userID uint, playlistName string) (*model.
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint, string) error); ok {
-		r1 = rf(userID, playlistName)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(playlistName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetPlaylistByNameAndUserID mocks the GetPlaylistByNameAndUserID method
+func (_m *MusicDAO) GetPlaylistByNameAndUserID(playlistName string, userID uint) (*model.Playlist, error) {
+	ret := _m.Called(playlistName, userID)
+
+	var r0 *model.Playlist
+	if rf, ok := ret.Get(0).(func(string, uint) *model.Playlist); ok {
+		r0 = rf(playlistName, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Playlist)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, uint) error); ok {
+		r1 = rf(playlistName, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
