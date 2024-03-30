@@ -22,7 +22,6 @@ go.work
 
 .idea/
 minikube-*
-backend
 
 # Dependency directories
 node_modules/
