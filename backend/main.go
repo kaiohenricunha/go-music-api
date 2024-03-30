@@ -2,30 +2,46 @@ package main
 
 import (
 	"log"
+	"net/http"
 
-	"github.com/kaiohenricunha/go-music-k8s/backend/api/server"
 	"github.com/kaiohenricunha/go-music-k8s/backend/config"
-	"github.com/kaiohenricunha/go-music-k8s/backend/internal/musicapp"
+	"github.com/kaiohenricunha/go-music-k8s/backend/internal/api/routes"
+	"github.com/kaiohenricunha/go-music-k8s/backend/internal/dao"
+	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
+	"github.com/kaiohenricunha/go-music-k8s/backend/internal/service"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-var cfg *config.Config
-var err error
-
-func init() {
-	log.Print("Welcome to music api...")
-
-	// get a config
-	cfg, err = config.NewConfig()
-	if err != nil {
-		log.Fatal("Config init failed", err)
-	}
-
-	// migrate db
-	if err = musicapp.DbInit(cfg.DB); err != nil {
-		log.Fatal("DB migration failed...")
-	}
-}
-
 func main() {
-	server.Start(cfg)
+	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	db, err := gorm.Open(mysql.Open(cfg.DatabaseDSN), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	// Run database migrations
+	if err := db.AutoMigrate(&model.User{}, &model.Song{}); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	// Setup DAOs
+	userDAO := dao.NewGormUserDAO(db)
+	songDAO := dao.NewGormSongDAO(db)
+
+	// Setup Services
+	userService := service.NewUserService(userDAO)
+	songService := service.NewSongService(songDAO)
+
+	// Setup API routes
+	router := routes.SetupRoutes(userService, songService)
+
+	log.Printf("Starting server on port %s", cfg.ServerPort)
+	if err := http.ListenAndServe(":"+cfg.ServerPort, router); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
