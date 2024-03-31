@@ -20,13 +20,7 @@ type MusicDAO interface {
 	FindSongByID(songID uint) (*model.Song, error)
 
 	CreatePlaylist(playlist *model.Playlist) error
-	UpdatePlaylist(playlist *model.Playlist) error
-	DeletePlaylist(playlistID uint) error
-	GetAllPlaylists() ([]model.Playlist, error)
-	GetPlaylistByID(uint) (*model.Playlist, error)
-	GetPlaylistsByUserID(userID uint) ([]model.Playlist, error)
-	GetPlaylistByName(playlistName string) (*model.Playlist, error)
-	GetPlaylistByNameAndUserID(playlistName string, userID uint) (*model.Playlist, error)
 	AddSongToPlaylist(playlistID, songID uint) error
-	RemoveSongFromPlaylist(playlistID, songID uint) error
+	GetPlaylistByNameAndUserID(playlistName string, userID uint) (*model.Playlist, error)
+	GetAllPlaylists() ([]model.Playlist, error)
 }

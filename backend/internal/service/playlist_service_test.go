@@ -42,17 +42,63 @@ func TestCreatePlaylist_Success(t *testing.T) {
 	mockDAO.AssertExpectations(t)
 }
 
-func TestCreatePlaylist_EmptyName(t *testing.T) {
+func TestAddSongToPlaylist_Success(t *testing.T) {
 	mockDAO := &mocks.MusicDAO{}
 	service := NewPlaylistService(mockDAO)
 
-	playlist := &model.Playlist{
-		UserID: 1,
+	playlistID := uint(1)
+	songID := uint(1)
+
+	mockDAO.On("AddSongToPlaylist", playlistID, songID).Return(nil)
+
+	err := service.AddSongToPlaylist(playlistID, songID)
+
+	assert.NoError(t, err)
+	mockDAO.AssertExpectations(t)
+}
+
+func TestAddSongToPlaylist_Error(t *testing.T) {
+	mockDAO := &mocks.MusicDAO{}
+	service := NewPlaylistService(mockDAO)
+
+	playlistID := uint(1)
+	songID := uint(1)
+
+	mockDAO.On("AddSongToPlaylist", playlistID, songID).Return(ErrPlaylistAlreadyExists)
+
+	err := service.AddSongToPlaylist(playlistID, songID)
+
+	assert.EqualError(t, err, ErrPlaylistAlreadyExists.Error())
+	mockDAO.AssertExpectations(t)
+}
+
+func TestGetAllPlaylists_Success(t *testing.T) {
+	mockDAO := &mocks.MusicDAO{}
+	service := NewPlaylistService(mockDAO)
+
+	mockPlaylists := []model.Playlist{
+		{Name: "Chill Hits", UserID: 1},
+		{Name: "Workout Jams", UserID: 1},
 	}
 
-	// No need to setup mock expectations here since the method should return early
+	mockDAO.On("GetAllPlaylists").Return(mockPlaylists, nil)
 
-	err := service.CreatePlaylist(playlist)
+	playlists, err := service.GetAllPlaylists()
 
-	assert.EqualError(t, err, "playlist name cannot be empty")
+	assert.NoError(t, err)
+	assert.Equal(t, mockPlaylists, playlists)
+	mockDAO.AssertExpectations(t)
+}
+
+func TestGetAllPlaylists_AuthError(t *testing.T) {
+	mockDAO := &mocks.MusicDAO{}
+	service := NewPlaylistService(mockDAO)
+
+	mockDAO.On("GetAllPlaylists").Return(nil, ErrUserDoesNotExist)
+
+	playlists, err := service.GetAllPlaylists()
+
+	assert.EqualError(t, err, ErrUserDoesNotExist.Error())
+	assert.Nil(t, playlists)
+	mockDAO.AssertExpectations(t)
 }

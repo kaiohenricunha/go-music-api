@@ -16,6 +16,10 @@ func NewGormDAO(db *gorm.DB) *GormDAO {
 	return &GormDAO{DB: db}
 }
 
+//////////////////////
+// USER METHODS //
+//////////////////////
+
 var (
 	ErrUserNotFound = errors.New("user not found")
 	ErrSongNotFound = errors.New("song not found")
@@ -76,19 +80,23 @@ func (g *GormDAO) DeleteUser(userID uint) error {
 	return g.DB.Delete(&model.User{}, userID).Error
 }
 
-// GetAllUsers retrieves all users from the database.
+// GetAllUsers retrieves all users with their playlists.
 func (g *GormDAO) GetAllUsers() ([]model.User, error) {
 	var users []model.User
-	err := g.DB.Find(&users).Error
+	err := g.DB.Preload("Playlists").Find(&users).Error
 	return users, err
 }
 
-// FindByUsername finds a single user by username.
+// FindByUsername finds a single user by username with playlists.
 func (g *GormDAO) FindByUsername(username string) (*model.User, error) {
 	var user model.User
-	err := g.DB.Where("username = ?", username).First(&user).Error
+	err := g.DB.Preload("Playlists").Where("username = ?", username).First(&user).Error
 	return &user, err
 }
+
+//////////////////////
+// SONG METHODS //
+//////////////////////
 
 // CreateSong inserts a new song into the database.
 func (g *GormDAO) CreateSong(song *model.Song) error {
@@ -112,6 +120,7 @@ func (g *GormDAO) GetAllSongs() ([]model.Song, error) {
 	return songs, err
 }
 
+// FindSongByName retrieves a single song by name.
 func (g *GormDAO) FindSongByName(songName string) (*model.Song, error) {
 	var song model.Song
 	err := g.DB.Where("name = ?", songName).First(&song).Error
@@ -121,6 +130,7 @@ func (g *GormDAO) FindSongByName(songName string) (*model.Song, error) {
 	return &song, err
 }
 
+// FindSongByID retrieves a single song by ID.
 func (g *GormDAO) FindSongByID(songID uint) (*model.Song, error) {
 	var song model.Song
 	err := g.DB.Where("id = ?", songID).First(&song).Error
@@ -130,64 +140,33 @@ func (g *GormDAO) FindSongByID(songID uint) (*model.Song, error) {
 	return &song, err
 }
 
+//////////////////////
+// PLAYLIST METHODS //
+//////////////////////
+
+// CreatePlaylist inserts a new playlist into the database.
 func (g *GormDAO) CreatePlaylist(playlist *model.Playlist) error {
 	return g.DB.Create(playlist).Error
 }
 
-func (g *GormDAO) UpdatePlaylist(playlist *model.Playlist) error {
-	return g.DB.Model(&model.Playlist{}).Where("id = ?", playlist.ID).Updates(playlist).Error
+// AddSongToPlaylist inserts a new record into the playlist_songs table to associate a song with a playlist.
+func (g *GormDAO) AddSongToPlaylist(playlistID, songID uint) error {
+	return g.DB.Exec("INSERT INTO playlist_songs (playlist_id, song_id) VALUES (?, ?)", playlistID, songID).Error
 }
 
-func (g *GormDAO) DeletePlaylist(playlistID uint) error {
-	return g.DB.Delete(&model.Playlist{}, playlistID).Error
-}
-
-func (g *GormDAO) GetAllPlaylists() ([]model.Playlist, error) {
-	var playlists []model.Playlist
-	err := g.DB.Find(&playlists).Error
-	return playlists, err
-}
-
-// GetPlaylistByID retrieves a playlist by its ID
-func (g *GormDAO) GetPlaylistByID(id uint) (*model.Playlist, error) {
+// GetPlaylistByNameAndUserID retrieves a single playlist by name and user ID.
+func (g *GormDAO) GetPlaylistByNameAndUserID(playlistName string, userID uint) (*model.Playlist, error) {
 	var playlist model.Playlist
-	result := g.DB.Preload("Songs").First(&playlist, id)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &playlist, nil
-}
-
-func (g *GormDAO) GetPlaylistsByUserID(userID uint) ([]model.Playlist, error) {
-	var playlists []model.Playlist
-	err := g.DB.Where("user_id = ?", userID).Find(&playlists).Error
-	return playlists, err
-}
-
-func (g *GormDAO) GetPlaylistByName(playlistName string) (*model.Playlist, error) {
-	var playlist model.Playlist
-	err := g.DB.Where("name = ?", playlistName).First(&playlist).Error
+	err := g.DB.Where("name = ? AND user_id = ?", playlistName, userID).First(&playlist).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	return &playlist, err
 }
 
-func (dao *GormDAO) GetPlaylistByNameAndUserID(name string, userID uint) (*model.Playlist, error) {
-	var playlist model.Playlist
-	if err := dao.DB.Where("name = ? AND user_id = ?", name, userID).First(&playlist).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &playlist, nil
-}
-
-func (g *GormDAO) AddSongToPlaylist(playlistID, songID uint) error {
-	return g.DB.Exec("INSERT INTO playlist_songs (playlist_id, song_id) VALUES (?, ?)", playlistID, songID).Error
-}
-
-func (g *GormDAO) RemoveSongFromPlaylist(playlistID, songID uint) error {
-	return g.DB.Exec("DELETE FROM playlist_songs WHERE playlist_id = ? AND song_id = ?", playlistID, songID).Error
+// GetAllPlaylists retrieves all playlists from the database.
+func (g *GormDAO) GetAllPlaylists() ([]model.Playlist, error) {
+	var playlists []model.Playlist
+	err := g.DB.Find(&playlists).Error
+	return playlists, err
 }

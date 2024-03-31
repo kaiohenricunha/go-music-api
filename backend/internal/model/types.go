@@ -4,8 +4,9 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
-	Username string `gorm:"unique"`
-	Password string // Hashed password
+	Username  string     `gorm:"unique"`
+	Password  string     // Hashed password
+	Playlists []Playlist `gorm:"foreignKey:UserID"`
 }
 
 type Song struct {

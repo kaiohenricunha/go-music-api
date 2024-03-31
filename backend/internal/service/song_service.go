@@ -15,10 +15,7 @@ var (
 )
 
 type SongService interface {
-	AddSong(song *model.Song) error
 	GetAllSongs() ([]model.Song, error)
-	UpdateSong(song *model.Song) error
-	DeleteSong(songID uint) error
 }
 
 type songService struct {
@@ -29,35 +26,6 @@ func NewSongService(songDAO dao.MusicDAO) SongService {
 	return &songService{songDAO: songDAO}
 }
 
-func (s *songService) AddSong(song *model.Song) error {
-	if song.Name == "" || song.Artist == "" {
-		return ErrSongNameRequired
-	}
-
-	existingSong, err := s.songDAO.FindSongByName(song.Name)
-	if err != nil {
-		return fmt.Errorf("failed to check for existing song: %w", err)
-	}
-	if existingSong != nil {
-		return ErrSongAlreadyExists
-	}
-
-	return s.songDAO.CreateSong(song)
-}
-
 func (s *songService) GetAllSongs() ([]model.Song, error) {
 	return s.songDAO.GetAllSongs()
-}
-
-func (s *songService) UpdateSong(song *model.Song) error {
-	if song.Name == "" || song.Artist == "" {
-		return ErrSongNameRequired
-	}
-
-	// Directly use the song ID to update the song. There's no need to find the song by name here.
-	return s.songDAO.UpdateSong(song)
-}
-
-func (s *songService) DeleteSong(songID uint) error {
-	return s.songDAO.DeleteSong(songID)
 }

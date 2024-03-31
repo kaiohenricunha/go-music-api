@@ -26,7 +26,7 @@ func SetupRoutes(userService service.UserService, songService service.SongServic
 	publicRouter := r.PathPrefix("/api/v1").Subrouter()
 	publicRouter.HandleFunc("/register", userHandlers.RegisterUserHandler).Methods("POST")
 
-	// User-specific routes with auth middleware
+	// User-specific routes
 	authUserRouter := r.PathPrefix("/api/v1").Subrouter()
 	authUserRouter.Use(authMiddleware)
 	authUserRouter.HandleFunc("/users", userHandlers.ListUsersHandler).Methods("GET")
@@ -34,7 +34,7 @@ func SetupRoutes(userService service.UserService, songService service.SongServic
 	authUserRouter.HandleFunc("/users/{id}", userHandlers.DeleteUserHandler).Methods("DELETE")
 	authUserRouter.HandleFunc("/users/{username}", userHandlers.FindUserByUsernameHandler).Methods("GET")
 
-	// Song Routes - assuming these routes also require authentication
+	// Song Routes
 	authSongRouter := r.PathPrefix("/api/v1/music").Subrouter()
 	authSongRouter.Use(authMiddleware)
 	authSongRouter.HandleFunc("", songHandlers.AddSong).Methods("POST")
@@ -42,10 +42,12 @@ func SetupRoutes(userService service.UserService, songService service.SongServic
 	authSongRouter.HandleFunc("/{id}", songHandlers.UpdateSong).Methods("PUT")
 	authSongRouter.HandleFunc("/{id}", songHandlers.DeleteSong).Methods("DELETE")
 
-	// Playlist Routes - assuming these routes also require authentication
+	// Playlist Routes
 	authPlaylistRouter := r.PathPrefix("/api/v1/playlists").Subrouter()
 	authPlaylistRouter.Use(authMiddleware)
 	authPlaylistRouter.HandleFunc("", playlistHandlers.CreatePlaylist).Methods("POST")
+	authPlaylistRouter.HandleFunc("/{playlistID}/songs/{songID}", playlistHandlers.AddSongToPlaylistHandler).Methods("POST")
+	authPlaylistRouter.HandleFunc("", playlistHandlers.GetAllPlaylistsHandler).Methods("GET")
 
 	return r
 }

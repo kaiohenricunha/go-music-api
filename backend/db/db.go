@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	// "net/http"
+	// "io/ioutil"
 
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
 	"gorm.io/driver/mysql"
@@ -85,9 +87,7 @@ func seedData(db *gorm.DB) error {
 	if err := seedUsers(db); err != nil {
 		return err
 	}
-	if err := seedSongs(db); err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -97,8 +97,8 @@ func seedUsers(db *gorm.DB) error {
 	db.Model(&model.User{}).Count(&count)
 	if count == 0 {
 		users := []model.User{
-			{Username: "user1", Password: "hashedPassword1"},
-			{Username: "user2", Password: "hashedPassword2"},
+			{Username: "admin", Password: "admin"},
+			{Username: "user2", Password: "user2"},
 		}
 		for _, user := range users {
 			if err := db.Create(&user).Error; err != nil {
@@ -106,25 +106,6 @@ func seedUsers(db *gorm.DB) error {
 			}
 		}
 		log.Println("Seeded Users successfully")
-	}
-	return nil
-}
-
-// seedSongs seeds the Songs table with initial data.
-func seedSongs(db *gorm.DB) error {
-	var count int64
-	db.Model(&model.Song{}).Count(&count)
-	if count == 0 {
-		songs := []model.Song{
-			{Name: "Song 1", Artist: "Artist 1"},
-			{Name: "Song 2", Artist: "Artist 2"},
-		}
-		for _, song := range songs {
-			if err := db.Create(&song).Error; err != nil {
-				return err
-			}
-		}
-		log.Println("Seeded Songs successfully")
 	}
 	return nil
 }

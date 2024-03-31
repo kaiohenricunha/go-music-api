@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/kaiohenricunha/go-music-k8s/backend/api"
+	"github.com/kaiohenricunha/go-music-k8s/backend/api/middleware"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/service"
 )
@@ -41,7 +43,16 @@ func (h *UserHandlers) RegisterUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	api.RespondWithJSON(w, http.StatusCreated, map[string]string{"message": "User registered successfully"})
+	// Prepare user data for the response, excluding the password
+	responseUser := map[string]interface{}{
+		"ID":        user.ID,
+		"Username":  user.Username,
+		"CreatedAt": user.CreatedAt,
+		"UpdatedAt": user.UpdatedAt,
+	}
+
+	// Respond with the user object instead of just a success message
+	api.RespondWithJSON(w, http.StatusCreated, responseUser)
 }
 
 // ListUsersHandler handles requests to list all users.
@@ -60,6 +71,7 @@ func (h *UserHandlers) ListUsersHandler(w http.ResponseWriter, r *http.Request) 
 			"CreatedAt": user.CreatedAt,
 			"UpdatedAt": user.UpdatedAt,
 			"Username":  user.Username,
+			"Playlists": user.Playlists,
 		}
 		response = append(response, userMap)
 	}
@@ -76,7 +88,8 @@ func (h *UserHandlers) UpdateUserHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	authUserID, ok := r.Context().Value("userID").(uint)
+	authUserID, ok := r.Context().Value(middleware.UserContextKey).(uint)
+	log.Println(authUserID)
 	if !ok || authUserID != uint(requestUserID) {
 		api.LogErrorAndRespond(w, "Unauthorized to update this user", http.StatusUnauthorized)
 		return
@@ -104,6 +117,12 @@ func (h *UserHandlers) DeleteUserHandler(w http.ResponseWriter, r *http.Request)
 	userID, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		api.LogErrorWithDetails(w, "Invalid user ID", err, http.StatusBadRequest)
+		return
+	}
+
+	authUserID, ok := r.Context().Value(middleware.UserContextKey).(uint)
+	if !ok || authUserID != uint(userID) {
+		api.LogErrorAndRespond(w, "Unauthorized to delete this user", http.StatusUnauthorized)
 		return
 	}
 
@@ -135,6 +154,7 @@ func (h *UserHandlers) FindUserByUsernameHandler(w http.ResponseWriter, r *http.
 		"CreatedAt": user.CreatedAt,
 		"UpdatedAt": user.UpdatedAt,
 		"Username":  user.Username,
+		"Playlists": user.Playlists,
 	}
 
 	api.RespondWithJSON(w, http.StatusOK, userMap)

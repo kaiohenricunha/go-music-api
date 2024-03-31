@@ -7,22 +7,6 @@ import (
 	"testing"
 )
 
-func TestAddSong(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
-	songService := NewSongService(mockDAO)
-
-	mockSong := &model.Song{Name: "Test Song", Artist: "Test Artist"}
-
-	// Set up the expectation that FindSongByName will be called with "Test Song" and should return nil, nil (indicating the song does not exist)
-	mockDAO.On("FindSongByName", "Test Song").Return(nil, nil)
-	// Set up the expectation that CreateSong will be called with mockSong and should return nil (indicating success)
-	mockDAO.On("CreateSong", mockSong).Return(nil)
-
-	err := songService.AddSong(mockSong)
-	assert.Nil(t, err)
-	mockDAO.AssertExpectations(t)
-}
-
 func TestGetAllSongs(t *testing.T) {
 	mockDAO := new(mocks.MusicDAO)
 	songService := NewSongService(mockDAO)

@@ -35,17 +35,19 @@ docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
 docker push "${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}"
 
 # Check if Minikube is running
-minikube status
+minikube status &> /dev/null
 if [ $? -ne 0 ]; then
-  echo "Minikube is not running. Please start Minikube and try again."
-  exit 1
+  echo "Minikube is not running, starting Minikube..."
+  minikube start
+else
+  echo "Minikube is already running."
 fi
 
 # Set Docker environment to Minikube
 eval $(minikube docker-env)
 
 # Check if the MySQL deployment already exists
-kubectl get deployment ${MYSQL_DEPLOYMENT_NAME} -n db-ns
+kubectl get deployment ${MYSQL_DEPLOYMENT_NAME} -n db-ns &> /dev/null
 if [ $? -eq 0 ]; then
   echo "MySQL Deployment already exists. Deleting the existing deployment..."
   kubectl delete deployment ${MYSQL_DEPLOYMENT_NAME} -n db-ns
@@ -61,7 +63,7 @@ echo "Waiting for MySQL deployment to complete..."
 kubectl rollout status deployment/${MYSQL_DEPLOYMENT_NAME} -n db-ns
 
 # Check if the Music API deployment already exists
-kubectl get deployment ${MUSICAPI_DEPLOYMENT_NAME} -n music-ns
+kubectl get deployment ${MUSICAPI_DEPLOYMENT_NAME} -n music-ns &> /dev/null
 if [ $? -eq 0 ]; then
   echo "Music API Deployment already exists. Deleting the existing deployment..."
   kubectl delete deployment ${MUSICAPI_DEPLOYMENT_NAME} -n music-ns

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/base64"
+	"log"
 	"net/http"
 	"strings"
 
@@ -45,6 +46,7 @@ func BasicAuthMiddleware(userService service.UserService) func(http.Handler) htt
 			}
 
 			// Use the exported UserContextKey
+			log.Printf("Setting userID in context: %d\n", userID)
 			ctx := context.WithValue(r.Context(), UserContextKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

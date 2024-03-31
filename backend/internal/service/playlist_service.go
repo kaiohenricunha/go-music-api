@@ -10,6 +10,8 @@ import (
 
 type PlaylistService interface {
 	CreatePlaylist(playlist *model.Playlist) error
+	AddSongToPlaylist(playlistID, songID uint) error
+	GetAllPlaylists() ([]model.Playlist, error)
 }
 
 type playlistService struct {
@@ -40,4 +42,12 @@ func (s *playlistService) CreatePlaylist(playlist *model.Playlist) error {
 
 	// Proceed with creation if existingPlaylist is nil
 	return s.musicDAO.CreatePlaylist(playlist)
+}
+
+func (s *playlistService) AddSongToPlaylist(playlistID, songID uint) error {
+	return s.musicDAO.AddSongToPlaylist(playlistID, songID)
+}
+
+func (s *playlistService) GetAllPlaylists() ([]model.Playlist, error) {
+	return s.musicDAO.GetAllPlaylists()
 }
