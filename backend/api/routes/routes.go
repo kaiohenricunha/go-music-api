@@ -37,9 +37,10 @@ func SetupRoutes(userService service.UserService, songService service.SongServic
 	// Song Routes
 	authSongRouter := r.PathPrefix("/api/v1/songs").Subrouter()
 	authSongRouter.Use(authMiddleware)
+	// Place the more specific /search route before the more general /{spotifyID} route
+	authSongRouter.HandleFunc("/search", songHandlers.SearchSongsFromSpotifyHandler).Methods("GET")
 	authSongRouter.HandleFunc("", songHandlers.GetAllSongsHandler).Methods("GET")
 	authSongRouter.HandleFunc("/{spotifyID}", songHandlers.GetSongFromSpotifyByIDHandler).Methods("GET")
-	authSongRouter.HandleFunc("/search", songHandlers.SearchSongsFromSpotifyHandler).Methods("GET")
 
 	// Playlist Routes
 	authPlaylistRouter := r.PathPrefix("/api/v1/playlists").Subrouter()

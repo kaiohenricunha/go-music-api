@@ -82,3 +82,7 @@ echo "Waiting for Music API deployment to complete..."
 kubectl rollout status deployment/${MUSICAPI_DEPLOYMENT_NAME} -n music-ns
 
 echo "Deployment completed successfully."
+
+# Display logs
+echo "Displaying Music API logs..."
+kubectl logs -f -n music-ns -l app=musicapi --max-log-requests=1

@@ -81,68 +81,13 @@ func (s *songService) GetSongFromSpotifyByID(spotifyID string) (*model.Song, err
 	return &song, nil
 }
 
-// parseSpotifyResponseToSongModel takes an io.Reader (the body of the HTTP response) and a pointer to a Song model,
-// and populates the Song model with data parsed from the response.
-func parseSpotifyResponseToSongModel(body io.Reader, song *model.Song) error {
-	type SpotifyResponse struct {
-		ID      string `json:"id"`
-		Name    string `json:"name"`
-		Artists []struct {
-			Name string `json:"name"`
-		} `json:"artists"`
-		Album struct {
-			Name   string `json:"name"`
-			Images []struct {
-				URL    string `json:"url"`
-				Height int    `json:"height"`
-				Width  int    `json:"width"`
-			} `json:"images"`
-		} `json:"album"`
-		PreviewURL   string `json:"preview_url"`
-		ExternalURLs struct {
-			Spotify string `json:"spotify"`
-		} `json:"external_urls"`
-	}
-
-	var spotifyTrack SpotifyResponse
-	if err := json.NewDecoder(body).Decode(&spotifyTrack); err != nil {
-		return err
-	}
-
-	// Assuming you want to concatenate the artist names if there are multiple
-	var artistNames []string
-	for _, artist := range spotifyTrack.Artists {
-		artistNames = append(artistNames, artist.Name)
-	}
-
-	// For the album image, you might want to choose one based on a specific size criteria.
-	// Here, we'll simply take the first one.
-	var albumImageURL string
-	if len(spotifyTrack.Album.Images) > 0 {
-		albumImageURL = spotifyTrack.Album.Images[0].URL // This could be adjusted based on your needs
-	}
-
-	// Populate your Song model with the data from the Spotify track
-	song.SpotifyID = spotifyTrack.ID
-	song.Name = spotifyTrack.Name
-	song.Artist = strings.Join(artistNames, ", ")
-	song.AlbumName = spotifyTrack.Album.Name
-	song.AlbumImageURL = albumImageURL
-	song.PreviewURL = spotifyTrack.PreviewURL
-	song.ExternalURL = spotifyTrack.ExternalURLs.Spotify
-
-	return nil
-}
-
 // SearchSongsFromSpotify searches for songs on Spotify based on track name and artist name.
 func (s *songService) SearchSongsFromSpotify(trackName, artistName string) ([]model.Song, error) {
-	log.Println("Entering SearchSongsFromSpotify") // Debug log
-
-	// Early log to check parameter values
-	log.Printf("Received trackName: %s, artistName: %s\n", trackName, artistName)
+	// Check if the track name and artist name are provided
+	log.Printf("Searching for song: %s by artist: %s", trackName, artistName)
 
 	// Construct the search query with track name and artist name
-	query := fmt.Sprintf("track:%s artist:%s", url.QueryEscape(trackName), url.QueryEscape(artistName))
+	query := url.QueryEscape(fmt.Sprintf("track:%s artist:%s", trackName, artistName))
 
 	// Construct the request URL with the encoded query
 	requestURL := fmt.Sprintf("https://api.spotify.com/v1/search?q=%s&type=track&include_external=audio", query)
@@ -172,17 +117,104 @@ func (s *songService) SearchSongsFromSpotify(trackName, artistName string) ([]mo
 	}
 
 	// Define a struct to unmarshal the search results
-	var searchResults struct {
+	type SpotifyTrackResponse struct {
 		Tracks struct {
-			Items []model.Song `json:"items"`
+			Items []struct {
+				ID      string `json:"id"`
+				Name    string `json:"name"`
+				Artists []struct {
+					Name string `json:"name"`
+				} `json:"artists"`
+				Album struct {
+					Name   string `json:"name"`
+					Images []struct {
+						URL string `json:"url"`
+					} `json:"images"`
+				} `json:"album"`
+				PreviewURL   string `json:"preview_url"`
+				ExternalURLs struct {
+					Spotify string `json:"spotify"`
+				} `json:"external_urls"`
+			} `json:"items"`
 		} `json:"tracks"`
 	}
 
-	// Decode the response body into the struct
-	if err := json.NewDecoder(resp.Body).Decode(&searchResults); err != nil {
+	var spotifyResponse SpotifyTrackResponse
+	if err := json.NewDecoder(resp.Body).Decode(&spotifyResponse); err != nil {
 		return nil, err
 	}
 
-	// Extract the items from the search results and return them
-	return searchResults.Tracks.Items, nil
+	var songs []model.Song
+	for _, item := range spotifyResponse.Tracks.Items {
+		var artistNames []string
+		for _, artist := range item.Artists {
+			artistNames = append(artistNames, artist.Name)
+		}
+
+		var albumImageURL string
+		if len(item.Album.Images) > 0 {
+			albumImageURL = item.Album.Images[0].URL
+		}
+
+		song := model.Song{
+			SpotifyID:     item.ID,
+			Name:          item.Name,
+			Artist:        strings.Join(artistNames, ", "),
+			AlbumName:     item.Album.Name,
+			AlbumImageURL: albumImageURL,
+			PreviewURL:    item.PreviewURL,
+			ExternalURL:   item.ExternalURLs.Spotify,
+		}
+
+		songs = append(songs, song)
+	}
+
+	return songs, nil
+}
+
+// parseSpotifyResponseToSongModel takes an io.Reader (the body of the HTTP response) and populates the provided Song model with data parsed from the response.
+func parseSpotifyResponseToSongModel(body io.Reader, song *model.Song) error {
+	type SpotifyTrack struct {
+		ID      string `json:"id"`
+		Name    string `json:"name"`
+		Artists []struct {
+			Name string `json:"name"`
+		} `json:"artists"`
+		Album struct {
+			Name   string `json:"name"`
+			Images []struct {
+				URL string `json:"url"`
+			} `json:"images"`
+		} `json:"album"`
+		PreviewURL   string `json:"preview_url"`
+		ExternalURLs struct {
+			Spotify string `json:"spotify"`
+		} `json:"external_urls"`
+	}
+
+	var spotifyTrack SpotifyTrack
+	if err := json.NewDecoder(body).Decode(&spotifyTrack); err != nil {
+		return err
+	}
+
+	var artistNames []string
+	for _, artist := range spotifyTrack.Artists {
+		artistNames = append(artistNames, artist.Name)
+	}
+
+	var albumImageURL string
+	if len(spotifyTrack.Album.Images) > 0 {
+		albumImageURL = spotifyTrack.Album.Images[0].URL
+	}
+
+	// Populate the Song model with the data from the Spotify track
+	song.SpotifyID = spotifyTrack.ID
+	song.Name = spotifyTrack.Name
+	song.Artist = strings.Join(artistNames, ", ")
+	song.AlbumName = spotifyTrack.Album.Name
+	song.AlbumImageURL = albumImageURL
+	song.PreviewURL = spotifyTrack.PreviewURL
+	song.ExternalURL = spotifyTrack.ExternalURLs.Spotify
+
+	return nil
 }

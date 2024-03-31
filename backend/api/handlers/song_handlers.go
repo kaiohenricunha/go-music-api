@@ -37,9 +37,6 @@ func (h *SongHandlers) GetAllSongsHandler(w http.ResponseWriter, r *http.Request
 func (h *SongHandlers) GetSongFromSpotifyByIDHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to get song from Spotify by ID")
 
-	// log the whole request
-	log.Printf("Request: %v", r)
-
 	// Retrieve the Spotify ID from the path variables
 	vars := mux.Vars(r)
 	spotifyID, ok := vars["spotifyID"]
@@ -59,23 +56,21 @@ func (h *SongHandlers) GetSongFromSpotifyByIDHandler(w http.ResponseWriter, r *h
 
 // SearchSongsFromSpotifyHandler handles GET requests to search for songs on Spotify.
 func (h *SongHandlers) SearchSongsFromSpotifyHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received request to search for songs on Spotify: %s", r.URL)
+	log.Println("Received request to search for songs on Spotify")
 
 	// log the whole request
-	log.Printf("Request: %v", r)
+	log.Printf("Request: %v", r.URL)
 
 	// Retrieve the query parameters for track name and artist name
-	trackName := r.URL.Query().Get("trackName")
+	songName := r.URL.Query().Get("songName")
 	artistName := r.URL.Query().Get("artistName")
 
-	log.Printf("Searching for track: %s by artist: %s", trackName, artistName)
-
-	if trackName == "" || artistName == "" {
+	if songName == "" || artistName == "" {
 		api.LogErrorWithDetails(w, "Track name and artist name are required", nil, http.StatusBadRequest)
 		return
 	}
 
-	songs, err := h.songService.SearchSongsFromSpotify(trackName, artistName)
+	songs, err := h.songService.SearchSongsFromSpotify(songName, artistName)
 	if err != nil {
 		api.LogErrorWithDetails(w, "Failed to search for songs on Spotify", err, http.StatusInternalServerError)
 		return
