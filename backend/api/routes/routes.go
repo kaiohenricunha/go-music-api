@@ -27,20 +27,19 @@ func SetupRoutes(userService service.UserService, songService service.SongServic
 	publicRouter.HandleFunc("/register", userHandlers.RegisterUserHandler).Methods("POST")
 
 	// User-specific routes
-	authUserRouter := r.PathPrefix("/api/v1").Subrouter()
+	authUserRouter := r.PathPrefix("/api/v1/users").Subrouter()
 	authUserRouter.Use(authMiddleware)
-	authUserRouter.HandleFunc("/users", userHandlers.ListUsersHandler).Methods("GET")
-	authUserRouter.HandleFunc("/users/{id}", userHandlers.UpdateUserHandler).Methods("PUT")
-	authUserRouter.HandleFunc("/users/{id}", userHandlers.DeleteUserHandler).Methods("DELETE")
-	authUserRouter.HandleFunc("/users/{username}", userHandlers.FindUserByUsernameHandler).Methods("GET")
+	authUserRouter.HandleFunc("", userHandlers.ListUsersHandler).Methods("GET")
+	authUserRouter.HandleFunc("/{id}", userHandlers.UpdateUserHandler).Methods("PUT")
+	authUserRouter.HandleFunc("/{id}", userHandlers.DeleteUserHandler).Methods("DELETE")
+	authUserRouter.HandleFunc("/{username}", userHandlers.FindUserByUsernameHandler).Methods("GET")
 
 	// Song Routes
-	authSongRouter := r.PathPrefix("/api/v1/music").Subrouter()
+	authSongRouter := r.PathPrefix("/api/v1/songs").Subrouter()
 	authSongRouter.Use(authMiddleware)
-	authSongRouter.HandleFunc("", songHandlers.AddSong).Methods("POST")
-	authSongRouter.HandleFunc("", songHandlers.GetAllSongs).Methods("GET")
-	authSongRouter.HandleFunc("/{id}", songHandlers.UpdateSong).Methods("PUT")
-	authSongRouter.HandleFunc("/{id}", songHandlers.DeleteSong).Methods("DELETE")
+	authSongRouter.HandleFunc("", songHandlers.GetAllSongsHandler).Methods("GET")
+	authSongRouter.HandleFunc("/{spotifyID}", songHandlers.GetSongFromSpotifyByIDHandler).Methods("GET")
+	authSongRouter.HandleFunc("/search", songHandlers.SearchSongsFromSpotifyHandler).Methods("GET")
 
 	// Playlist Routes
 	authPlaylistRouter := r.PathPrefix("/api/v1/playlists").Subrouter()

@@ -11,8 +11,13 @@ type User struct {
 
 type Song struct {
 	gorm.Model
-	Name   string `json:"name"`
-	Artist string `json:"artist"`
+	SpotifyID     string `json:"spotify_id"`
+	Name          string `json:"name"`
+	Artist        string `json:"artist"`
+	AlbumName     string `json:"album_name"`
+	AlbumImageURL string `json:"album_image_url"`
+	PreviewURL    string `json:"preview_url"`
+	ExternalURL   string `json:"external_url"` // URL to Spotify
 }
 
 type Playlist struct {

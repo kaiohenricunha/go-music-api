@@ -98,21 +98,6 @@ func (g *GormDAO) FindByUsername(username string) (*model.User, error) {
 // SONG METHODS //
 //////////////////////
 
-// CreateSong inserts a new song into the database.
-func (g *GormDAO) CreateSong(song *model.Song) error {
-	return g.DB.Create(song).Error
-}
-
-// UpdateSong updates an existing song's information in the database.
-func (g *GormDAO) UpdateSong(song *model.Song) error {
-	return g.DB.Model(&model.Song{}).Where("id = ?", song.ID).Updates(song).Error
-}
-
-// DeleteSong removes a song from the database by ID.
-func (g *GormDAO) DeleteSong(songID uint) error {
-	return g.DB.Delete(&model.Song{}, songID).Error
-}
-
 // GetAllSongs retrieves all songs from the database.
 func (g *GormDAO) GetAllSongs() ([]model.Song, error) {
 	var songs []model.Song
@@ -120,24 +105,19 @@ func (g *GormDAO) GetAllSongs() ([]model.Song, error) {
 	return songs, err
 }
 
-// FindSongByName retrieves a single song by name.
-func (g *GormDAO) FindSongByName(songName string) (*model.Song, error) {
+func (g *GormDAO) GetSongFromSpotifyByID(spotifyID string) (*model.Song, error) {
 	var song model.Song
-	err := g.DB.Where("name = ?", songName).First(&song).Error
+	err := g.DB.Where("spotify_id = ?", spotifyID).First(&song).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
+		return nil, ErrSongNotFound
 	}
 	return &song, err
 }
 
-// FindSongByID retrieves a single song by ID.
-func (g *GormDAO) FindSongByID(songID uint) (*model.Song, error) {
-	var song model.Song
-	err := g.DB.Where("id = ?", songID).First(&song).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	return &song, err
+func (g *GormDAO) SearchSongsFromSpotify(trackName, artistName string) ([]model.Song, error) {
+	var songs []model.Song
+	err := g.DB.Where("track_name = ? AND artist_name = ?", trackName, artistName).Find(&songs).Error
+	return songs, err
 }
 
 //////////////////////

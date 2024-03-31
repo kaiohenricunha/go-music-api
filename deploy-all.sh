@@ -69,6 +69,9 @@ if [ $? -eq 0 ]; then
   kubectl delete deployment ${MUSICAPI_DEPLOYMENT_NAME} -n music-ns
 fi
 
+# call create-spotify-secret.sh
+./create-spotify-secret.sh
+
 # Deploy Music API to Minikube
 echo "Deploying Music API to Minikube..."
 kubectl apply -f "${MUSICAPI_DEPLOYMENT_YAML}/api-music-ns.yaml"

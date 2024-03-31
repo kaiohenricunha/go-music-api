@@ -26,6 +26,16 @@ spec:
             cpu: 100m
             memory: 100Mi
         env:
+          - name: SPOTIFY_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: spotify-secrets
+                key: clientid
+          - name: SPOTIFY_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: spotify-secrets
+                key: clientsecret
           - name: CONFIG_DBPASS
             valueFrom:
               secretKeyRef:
