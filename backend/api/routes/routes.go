@@ -45,6 +45,8 @@ func SetupRoutes(userService service.UserService, songService service.SongServic
 	// Playlist Routes
 	protectedRouter.HandleFunc("/playlists", playlistHandlers.GetAllPlaylistsHandler).Methods("GET")
 	protectedRouter.HandleFunc("/playlists/{playlistID}", playlistHandlers.GetPlaylistByIDHandler).Methods("GET")
+	protectedRouter.HandleFunc("/playlists/{playlistID}/songs/{songID}", playlistHandlers.AddSongToPlaylistHandler).Methods("POST")
+	protectedRouter.HandleFunc("/playlists/{playlistID}/songs/{songID}", playlistHandlers.RemoveSongFromPlaylistHandler).Methods("DELETE")
 
 	return r
 }

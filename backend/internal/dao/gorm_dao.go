@@ -2,6 +2,7 @@ package dao
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
 	"gorm.io/gorm"
@@ -21,10 +22,11 @@ func NewGormDAO(db *gorm.DB) *GormDAO {
 //////////////////////
 
 var (
-	ErrUserNotFound     = errors.New("user not found")
-	ErrSongNotFound     = errors.New("song not found")
-	ErrPlaylistNotFound = errors.New("playlist not found")
-	ErrRecordNotFound   = gorm.ErrRecordNotFound
+	ErrUserNotFound      = errors.New("user not found")
+	ErrSongNotFound      = errors.New("song not found")
+	ErrPlaylistNotFound  = errors.New("playlist not found")
+	ErrRecordNotFound    = gorm.ErrRecordNotFound
+	ErrFailedAssociation = errors.New("failed to associate song with playlist")
 )
 
 // CreateUser checks for a soft-deleted user with the same username and permanently deletes it before creating a new one.
@@ -145,4 +147,49 @@ func (g *GormDAO) GetAllPlaylists() ([]model.Playlist, error) {
 		return nil, err
 	}
 	return playlists, nil
+}
+
+func (g *GormDAO) AddSongToPlaylist(playlistID, songID string) error {
+	// Convert IDs from string to their respective types, handling errors as needed.
+	pID, _ := strconv.ParseUint(playlistID, 10, 64)
+	sID, _ := strconv.ParseUint(songID, 10, 64)
+
+	// Assuming a many-to-many relationship is set up between playlists and songs,
+	// you can use GORM's Association method to append the song to the playlist.
+	var playlist model.Playlist
+	if err := g.DB.First(&playlist, pID).Error; err != nil {
+		return ErrPlaylistNotFound
+	}
+
+	var song model.Song
+	if err := g.DB.First(&song, sID).Error; err != nil {
+		return ErrSongNotFound
+	}
+
+	// Append the song to the playlist's Songs association
+	err := g.DB.Model(&playlist).Association("Songs").Append(&song)
+	if err != nil {
+		return ErrFailedAssociation
+	}
+
+	return nil
+}
+
+func (g *GormDAO) RemoveSongFromPlaylist(playlistID, songID string) error {
+	// Convert string IDs to their respective types
+	pID, _ := strconv.ParseUint(playlistID, 10, 64)
+	sID, _ := strconv.ParseUint(songID, 10, 64)
+
+	var playlist model.Playlist
+	if err := g.DB.First(&playlist, pID).Error; err != nil {
+		return ErrPlaylistNotFound // Custom error
+	}
+
+	// Use the Association method to remove the song from the playlist
+	err := g.DB.Model(&playlist).Association("Songs").Delete(&model.Song{Model: gorm.Model{ID: uint(sID)}})
+	if err != nil {
+		return err // Handle error
+	}
+
+	return nil
 }

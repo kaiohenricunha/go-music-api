@@ -19,4 +19,6 @@ type MusicDAO interface {
 
 	GetAllPlaylists() ([]model.Playlist, error)
 	GetPlaylistByID(playlistID string) (*model.Playlist, error)
+	AddSongToPlaylist(playlistID, songID string) error
+	RemoveSongFromPlaylist(playlistID, songID string) error
 }

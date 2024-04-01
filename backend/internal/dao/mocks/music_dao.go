@@ -279,3 +279,31 @@ func (_m *MusicDAO) GetAllPlaylists() ([]model.Playlist, error) {
 
 	return r0, r1
 }
+
+// AddSongToPlaylist mocks the AddSongToPlaylist method
+func (_m *MusicDAO) AddSongToPlaylist(playlistID, songID string) error {
+	ret := _m.Called(playlistID, songID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(playlistID, songID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveSongFromPlaylist mocks the RemoveSongFromPlaylist method
+func (_m *MusicDAO) RemoveSongFromPlaylist(playlistID, songID string) error {
+	ret := _m.Called(playlistID, songID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(playlistID, songID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
