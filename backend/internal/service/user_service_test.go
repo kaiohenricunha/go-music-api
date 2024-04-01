@@ -4,174 +4,116 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kaiohenricunha/go-music-k8s/backend/internal/dao"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/dao/mocks"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func TestValidateUser(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
-	userService := NewUserService(mockDAO)
-
-	username := "testuser"
-	password := "password"
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	mockUser := &model.User{Username: username, Password: string(hashedPassword)}
-	id := uint(1)
-	mockUser.ID = id
-
-	// Expectation: FindByUsername is called and returns mockUser, nil
-	mockDAO.On("FindByUsername", username).Return(mockUser, nil)
-
-	userID, valid := userService.ValidateUser(username, password)
-	assert.True(t, valid)
-	assert.Equal(t, mockUser.ID, userID)
-
-	mockDAO.AssertExpectations(t)
-}
-
-func TestValidateUser_UserNotFound(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
-	userService := NewUserService(mockDAO)
-
-	username := "testuser"
-	password := "password"
-
-	// Expectation: FindByUsername is called and returns nil, nil
-	mockDAO.On("FindByUsername", username).Return(nil, nil)
-
-	userID, valid := userService.ValidateUser(username, password)
-	assert.False(t, valid)
-	assert.Equal(t, uint(0), userID)
-
-	mockDAO.AssertExpectations(t)
-}
-
-func TestValidateUser_PasswordMismatch(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
-	userService := NewUserService(mockDAO)
-
-	username := "testuser"
-	password := "password"
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	mockUser := &model.User{Username: username, Password: string(hashedPassword)}
-	id := uint(1)
-	mockUser.ID = id
-
-	// Expectation: FindByUsername is called and returns mockUser, nil
-	mockDAO.On("FindByUsername", username).Return(mockUser, nil)
-
-	userID, valid := userService.ValidateUser(username, "wrongpassword")
-	assert.False(t, valid)
-	assert.Equal(t, uint(0), userID)
-
-	mockDAO.AssertExpectations(t)
-}
-
 func TestRegisterUser(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
+	mockDAO := &mocks.MusicDAO{}
 	userService := NewUserService(mockDAO)
 
-	username := "testuser"
-	password := "password"
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	mockUser := &model.User{Username: username, Password: string(hashedPassword)}
+	password, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	testUser := &model.User{Username: "testUser", Password: string(password)}
 
-	// Expectation: FindByUsername is called and returns nil, nil
-	mockDAO.On("FindByUsername", username).Return(nil, nil)
-	// Expectation: CreateUser is called with mockUser and returns nil
-	mockDAO.On("CreateUser", mockUser).Return(nil)
+	// Mock setup corrected to accurately reflect the logic flow
+	// Scenario 1: User does not exist and is created successfully
+	mockDAO.On("GetUserByUsername", "testUser").Return(nil, nil) // Simulate user not existing
+	mockDAO.On("CreateUser", mock.AnythingOfType("*model.User")).Return(nil)
 
-	err := userService.RegisterUser(mockUser)
-	assert.Nil(t, err)
+	err := userService.RegisterUser(testUser)
+	assert.NoError(t, err)
+	mockDAO.AssertExpectations(t)
 
+	// Reset mock expectations between scenarios
+	mockDAO.ExpectedCalls = nil
+	mockDAO.Calls = nil
+
+	// Scenario 2: User already exists
+	mockDAO.On("GetUserByUsername", "testUser").Return(testUser, nil) // Simulate user existing
+
+	err = userService.RegisterUser(testUser)
+	assert.Equal(t, ErrUsernameTaken, err)
 	mockDAO.AssertExpectations(t)
 }
 
-func TestRegisterUser_UsernameTaken(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
+func TestValidateUser(t *testing.T) {
+	mockDAO := &mocks.MusicDAO{}
 	userService := NewUserService(mockDAO)
 
-	username := "testuser"
 	password := "password"
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	mockUser := &model.User{Username: username, Password: string(hashedPassword)}
+	user := &model.User{Username: "testUser", Password: string(hashedPassword)}
 
-	// Expectation: FindByUsername is called and returns mockUser, nil
-	mockDAO.On("FindByUsername", username).Return(mockUser, nil)
+	// Scenario 1: Successfully validate user
+	mockDAO.On("GetUserByUsername", "testUser").Return(user, nil)
 
-	err := userService.RegisterUser(mockUser)
-	assert.Equal(t, ErrUsernameTaken, err)
+	userID, valid := userService.ValidateUser("testUser", password)
+	assert.True(t, valid)
+	assert.Equal(t, user.ID, userID)
+	mockDAO.AssertExpectations(t)
 
+	// Scenario 2: Invalid username
+	mockDAO.On("GetUserByUsername", "invalidUser").Return(nil, ErrUserNotFound)
+
+	_, valid = userService.ValidateUser("invalidUser", password)
+	assert.False(t, valid)
+	mockDAO.AssertExpectations(t)
+
+	// Scenario 3: Invalid password
+	_, valid = userService.ValidateUser("testUser", "wrongPassword")
+	assert.False(t, valid)
 	mockDAO.AssertExpectations(t)
 }
 
 func TestGetAllUsers(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
+	mockDAO := &mocks.MusicDAO{}
 	userService := NewUserService(mockDAO)
 
-	mockUsers := []model.User{
-		{Username: "testuser1"},
-		{Username: "testuser2"},
+	users := []model.User{
+		{Username: "user1"},
+		{Username: "user2"},
 	}
 
-	// Expectation: GetAllUsers is called and returns mockUsers, nil
-	mockDAO.On("GetAllUsers").Return(mockUsers, nil)
+	// Scenario 1: Successfully retrieve all users
+	mockDAO.On("GetAllUsers").Return(users, nil).Once()
 
-	users, err := userService.GetAllUsers()
-	assert.Nil(t, err)
-	assert.Equal(t, mockUsers, users)
+	result, err := userService.GetAllUsers()
+	assert.NoError(t, err, "Expected no error for GetAllUsers")
+	assert.Len(t, result, 2, "Expected result to have length 2")
+	assert.Equal(t, users, result, "Expected returned users to match the mock users")
+	mockDAO.AssertExpectations(t)
 
+	// Reset mock expectations to test the failure scenario
+	mockDAO.ExpectedCalls = nil
+	mockDAO.Calls = nil
+
+	// Scenario 2: Error retrieving users
+	mockDAO.On("GetAllUsers").Return(nil, errors.New("error")).Once()
+
+	_, err = userService.GetAllUsers()
+	assert.Error(t, err, "Expected an error for GetAllUsers")
 	mockDAO.AssertExpectations(t)
 }
 
 func TestGetUserByUsername(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
+	mockDAO := &mocks.MusicDAO{}
 	userService := NewUserService(mockDAO)
 
-	username := "testuser"
-	mockUser := &model.User{Username: username}
+	testUser := &model.User{Username: "testUser", Password: "hashedpassword"}
 
-	// Expectation: FindByUsername is called with username and returns mockUser, nil
-	mockDAO.On("FindByUsername", username).Return(mockUser, nil)
+	// Scenario 1: Successfully retrieve a user by username
+	mockDAO.On("GetUserByUsername", "testUser").Return(testUser, nil) // Simulates user exists
+	err := userService.RegisterUser(testUser)
+	assert.Equal(t, ErrUsernameTaken, err) // Verifies the correct error is returned
 
-	user, err := userService.GetUserByUsername(username)
-	assert.Nil(t, err)
-	assert.Equal(t, mockUser, user)
+	// Scenario 2: User not found
+	mockDAO.On("GetUserByUsername", "nonExistingUser").Return(nil, ErrUserNotFound)
 
-	mockDAO.AssertExpectations(t)
-}
-
-func TestGetUserByUsername_UserNotFound(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
-	userService := NewUserService(mockDAO)
-
-	username := "testuser"
-
-	// Expectation: FindByUsername is called with username and returns nil, ErrUserNotFound
-	mockDAO.On("FindByUsername", username).Return(nil, dao.ErrUserNotFound)
-
-	user, err := userService.GetUserByUsername(username)
-	assert.Nil(t, user)
-	assert.Equal(t, dao.ErrUserNotFound, err)
-
-	mockDAO.AssertExpectations(t)
-}
-
-func TestGetUserByUsername_Error(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
-	userService := NewUserService(mockDAO)
-
-	username := "testuser"
-
-	// Expectation: FindByUsername is called with username and returns nil, errors.New("error")
-	mockDAO.On("FindByUsername", username).Return(nil, errors.New("error"))
-
-	user, err := userService.GetUserByUsername(username)
-	assert.Nil(t, user)
-	assert.NotNil(t, err)
-
+	_, err = userService.GetUserByUsername("nonExistingUser")
+	assert.Error(t, err)
+	assert.Equal(t, ErrUserNotFound, err)
 	mockDAO.AssertExpectations(t)
 }

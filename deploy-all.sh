@@ -23,6 +23,9 @@ fi
 # Pass the DB_CLEANUP variable to your Go application
 export DB_CLEANUP
 
+# Make create-secrets.sh executable
+chmod +x create-secrets.sh
+
 # Configuration variables
 IMAGE_NAME="go-music-k8s"
 VERSION="latest"
@@ -31,9 +34,28 @@ MYSQL_DEPLOYMENT_NAME="mysql"
 MUSICAPI_DEPLOYMENT_YAML="deploy/k8s/backend/musicapi"
 MYSQL_DEPLOYMENT_YAML="deploy/k8s/backend/mysql"
 
+# Change into the backend directory
+echo "Changing into backend directory..."
+cd backend || exit
+
+# Run Go tests
+echo "Running Go tests..."
+if ! go test ./...; then
+  echo "Tests failed. Exiting..."
+  exit 1
+fi
+
+# Run golangci-lint
+echo "Running golangci-lint..."
+if ! golangci-lint run ./...; then
+  echo "Linting errors detected. Exiting..."
+  exit 1
+fi
+
+echo "Tests and Linting passed. Proceeding with the build."
+
 # Build Docker image
 echo "Building Docker image..."
-cd backend || exit
 docker build -t "${DOCKER_USERNAME}/${IMAGE_NAME}:${VERSION}" .
 cd .. || exit
 
@@ -59,6 +81,7 @@ kubectl get deployment ${MYSQL_DEPLOYMENT_NAME} -n db-ns &> /dev/null
 if [ $? -eq 0 ]; then
   echo "MySQL Deployment already exists. Deleting the existing deployment..."
   kubectl delete deployment ${MYSQL_DEPLOYMENT_NAME} -n db-ns
+  kubectl delete pvc --all -n db-ns
 fi
 
 # Deploy MySQL
