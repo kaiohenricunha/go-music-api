@@ -3,9 +3,8 @@ package db
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
-	// "net/http"
-	// "io/ioutil"
 
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
 	"gorm.io/driver/mysql"
@@ -15,6 +14,12 @@ import (
 // InitDB initializes the database and seeds it with initial data.
 func InitDB(dsn string) (*gorm.DB, error) {
 	db := connectDB(dsn)
+
+	if os.Getenv("DB_CLEANUP") == "true" {
+		if err := dropAllTables(db); err != nil {
+			return nil, fmt.Errorf("failed to drop tables: %w", err)
+		}
+	}
 
 	if err := migrateSchema(db); err != nil {
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
@@ -79,7 +84,7 @@ func createDatabase(baseDSN string, dbName string) {
 
 // migrateSchema auto-migrates the database schema using GORM's AutoMigrate.
 func migrateSchema(db *gorm.DB) error {
-	return db.AutoMigrate(&model.User{}, &model.Song{})
+	return db.AutoMigrate(&model.User{}, &model.Song{}, &model.Playlist{}, &model.Rating{})
 }
 
 // seedData seeds the database with initial data if necessary.
@@ -108,4 +113,10 @@ func seedUsers(db *gorm.DB) error {
 		log.Println("Seeded Users successfully")
 	}
 	return nil
+}
+
+// dropAllTables drops all tables in the database.
+func dropAllTables(db *gorm.DB) error {
+	// Assuming you want to drop all tables, adjust accordingly
+	return db.Migrator().DropTable(&model.User{}, &model.Song{}, &model.Playlist{}, &model.Rating{})
 }

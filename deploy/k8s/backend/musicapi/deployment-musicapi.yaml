@@ -61,3 +61,8 @@ spec:
               configMapKeyRef:
                 key: dbhost
                 name: music-cm
+          - name: JWT_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: jwt-secret
+                key: jwtkey

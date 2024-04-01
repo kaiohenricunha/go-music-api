@@ -11,8 +11,8 @@ import (
 func SetupRoutes(userService service.UserService, songService service.SongService, playlistService service.PlaylistService) *mux.Router {
 	r := mux.NewRouter()
 
-	// Middleware for basic auth, excluding specific routes
-	authMiddleware := middleware.BasicAuthMiddleware(userService)
+	// Middleware for JWT Auth
+	jwtMiddleware := middleware.JWTAuthMiddleware(userService)
 
 	// Apply global middleware directly
 	r.Use(middleware.LoggingMiddleware)
@@ -22,32 +22,29 @@ func SetupRoutes(userService service.UserService, songService service.SongServic
 	songHandlers := handlers.NewSongHandlers(songService)
 	playlistHandlers := handlers.NewPlaylistHandlers(playlistService)
 
-	// Public routes
+	// Public routes (no auth needed)
 	publicRouter := r.PathPrefix("/api/v1").Subrouter()
 	publicRouter.HandleFunc("/register", userHandlers.RegisterUserHandler).Methods("POST")
+	// The login route itself will handle basic authentication inside its handler
+	publicRouter.HandleFunc("/login", userHandlers.UserLoginHandler).Methods("POST")
+
+	// Protected routes (JWT Auth)
+	protectedRouter := r.PathPrefix("/api/v1").Subrouter()
+	protectedRouter.Use(jwtMiddleware) // Apply JWT middleware here
 
 	// User-specific routes
-	authUserRouter := r.PathPrefix("/api/v1/users").Subrouter()
-	authUserRouter.Use(authMiddleware)
-	authUserRouter.HandleFunc("", userHandlers.ListUsersHandler).Methods("GET")
-	authUserRouter.HandleFunc("/{id}", userHandlers.UpdateUserHandler).Methods("PUT")
-	authUserRouter.HandleFunc("/{id}", userHandlers.DeleteUserHandler).Methods("DELETE")
-	authUserRouter.HandleFunc("/{username}", userHandlers.FindUserByUsernameHandler).Methods("GET")
+	protectedRouter.HandleFunc("/users", userHandlers.ListUsersHandler).Methods("GET")
+	protectedRouter.HandleFunc("/users/{username}", userHandlers.GetUserByUsername).Methods("GET")
+	// TODO: implement a route to update and delete users
 
 	// Song Routes
-	authSongRouter := r.PathPrefix("/api/v1/songs").Subrouter()
-	authSongRouter.Use(authMiddleware)
-	// Place the more specific /search route before the more general /{spotifyID} route
-	authSongRouter.HandleFunc("/search", songHandlers.SearchSongsFromSpotifyHandler).Methods("GET")
-	authSongRouter.HandleFunc("", songHandlers.GetAllSongsHandler).Methods("GET")
-	authSongRouter.HandleFunc("/{spotifyID}", songHandlers.GetSongFromSpotifyByIDHandler).Methods("GET")
+	protectedRouter.HandleFunc("/songs", songHandlers.GetAllSongsHandler).Methods("GET")
+	protectedRouter.HandleFunc("/songs/search", songHandlers.SearchSongsFromSpotifyHandler).Methods("GET")
+	protectedRouter.HandleFunc("/songs/{spotifyID}", songHandlers.GetSongFromSpotifyByIDHandler).Methods("GET")
 
 	// Playlist Routes
-	authPlaylistRouter := r.PathPrefix("/api/v1/playlists").Subrouter()
-	authPlaylistRouter.Use(authMiddleware)
-	authPlaylistRouter.HandleFunc("", playlistHandlers.CreatePlaylist).Methods("POST")
-	authPlaylistRouter.HandleFunc("/{playlistID}/songs/{songID}", playlistHandlers.AddSongToPlaylistHandler).Methods("POST")
-	authPlaylistRouter.HandleFunc("", playlistHandlers.GetAllPlaylistsHandler).Methods("GET")
+	protectedRouter.HandleFunc("/playlists", playlistHandlers.GetAllPlaylistsHandler).Methods("GET")
+	protectedRouter.HandleFunc("/playlists/{playlistID}", playlistHandlers.GetPlaylistByIDHandler).Methods("GET")
 
 	return r
 }

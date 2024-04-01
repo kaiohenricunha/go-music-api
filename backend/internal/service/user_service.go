@@ -24,10 +24,8 @@ var (
 type UserService interface {
 	ValidateUser(username, password string) (uint, bool)
 	RegisterUser(user *model.User) error
-	UpdateUser(user *model.User) error
-	DeleteUser(userID uint) error
 	GetAllUsers() ([]model.User, error)
-	FindUserByUsername(username string) (*model.User, error)
+	GetUserByUsername(username string) (*model.User, error)
 }
 
 type userService struct {
@@ -41,7 +39,7 @@ func NewUserService(userDAO dao.MusicDAO) UserService {
 // ValidateUser checks if the username and password are correct.
 func (us *userService) ValidateUser(username, password string) (uint, bool) {
 	log.Printf("Validating user: %s\n", username)
-	user, err := us.userDAO.FindByUsername(username)
+	user, err := us.userDAO.GetUserByUsername(username)
 	if err != nil || user == nil {
 		log.Printf("User not found: %s\n", username)
 		return 0, false
@@ -59,7 +57,7 @@ func (us *userService) ValidateUser(username, password string) (uint, bool) {
 // RegisterUser handles registering a new user with hashed password.
 func (us *userService) RegisterUser(user *model.User) error {
 	// Check if username already exists
-	existingUser, _ := us.FindUserByUsername(user.Username)
+	existingUser, _ := us.GetUserByUsername(user.Username)
 	if existingUser != nil {
 		return ErrUsernameTaken
 	}
@@ -75,38 +73,12 @@ func (us *userService) RegisterUser(user *model.User) error {
 	return us.userDAO.CreateUser(user)
 }
 
-// UpdateUser updates an existing user's information.
-func (us *userService) UpdateUser(user *model.User) error {
-	// If a new password is provided, hash it before saving.
-	if user.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-		if err != nil {
-			return err
-		}
-		user.Password = string(hashedPassword)
-	}
-
-	return us.userDAO.UpdateUser(user)
-}
-
-// DeleteUser removes a user by their ID.
-func (us *userService) DeleteUser(userID uint) error {
-	return us.userDAO.DeleteUser(userID)
-}
-
 // GetAllUsers retrieves all users.
 func (us *userService) GetAllUsers() ([]model.User, error) {
 	return us.userDAO.GetAllUsers()
 }
 
-// FindUserByUsername retrieves a user by their username.
-func (us *userService) FindUserByUsername(username string) (*model.User, error) {
-	user, err := us.userDAO.FindByUsername(username)
-	if err != nil {
-		return nil, err
-	}
-	if user == nil {
-		return nil, ErrUserNotFound
-	}
-	return user, nil
+// GetUserByUsername retrieves a user by their username.
+func (us *userService) GetUserByUsername(username string) (*model.User, error) {
+	return us.userDAO.GetUserByUsername(username)
 }

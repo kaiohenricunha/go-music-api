@@ -108,39 +108,6 @@ func TestRegisterUser_UsernameTaken(t *testing.T) {
 	mockDAO.AssertExpectations(t)
 }
 
-func TestUpdateUser(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
-	userService := NewUserService(mockDAO)
-
-	username := "testuser"
-	password := "password"
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	mockUser := &model.User{Username: username, Password: string(hashedPassword)}
-
-	// Expectation: UpdateUser is called with mockUser and returns nil
-	mockDAO.On("UpdateUser", mockUser).Return(nil)
-
-	err := userService.UpdateUser(mockUser)
-	assert.Nil(t, err)
-
-	mockDAO.AssertExpectations(t)
-}
-
-func TestDeleteUser(t *testing.T) {
-	mockDAO := new(mocks.MusicDAO)
-	userService := NewUserService(mockDAO)
-
-	userID := uint(1)
-
-	// Expectation: DeleteUser is called with userID and returns nil
-	mockDAO.On("DeleteUser", userID).Return(nil)
-
-	err := userService.DeleteUser(userID)
-	assert.Nil(t, err)
-
-	mockDAO.AssertExpectations(t)
-}
-
 func TestGetAllUsers(t *testing.T) {
 	mockDAO := new(mocks.MusicDAO)
 	userService := NewUserService(mockDAO)
@@ -160,7 +127,7 @@ func TestGetAllUsers(t *testing.T) {
 	mockDAO.AssertExpectations(t)
 }
 
-func TestFindUserByUsername(t *testing.T) {
+func TestGetUserByUsername(t *testing.T) {
 	mockDAO := new(mocks.MusicDAO)
 	userService := NewUserService(mockDAO)
 
@@ -170,14 +137,14 @@ func TestFindUserByUsername(t *testing.T) {
 	// Expectation: FindByUsername is called with username and returns mockUser, nil
 	mockDAO.On("FindByUsername", username).Return(mockUser, nil)
 
-	user, err := userService.FindUserByUsername(username)
+	user, err := userService.GetUserByUsername(username)
 	assert.Nil(t, err)
 	assert.Equal(t, mockUser, user)
 
 	mockDAO.AssertExpectations(t)
 }
 
-func TestFindUserByUsername_UserNotFound(t *testing.T) {
+func TestGetUserByUsername_UserNotFound(t *testing.T) {
 	mockDAO := new(mocks.MusicDAO)
 	userService := NewUserService(mockDAO)
 
@@ -186,14 +153,14 @@ func TestFindUserByUsername_UserNotFound(t *testing.T) {
 	// Expectation: FindByUsername is called with username and returns nil, ErrUserNotFound
 	mockDAO.On("FindByUsername", username).Return(nil, dao.ErrUserNotFound)
 
-	user, err := userService.FindUserByUsername(username)
+	user, err := userService.GetUserByUsername(username)
 	assert.Nil(t, user)
 	assert.Equal(t, dao.ErrUserNotFound, err)
 
 	mockDAO.AssertExpectations(t)
 }
 
-func TestFindUserByUsername_Error(t *testing.T) {
+func TestGetUserByUsername_Error(t *testing.T) {
 	mockDAO := new(mocks.MusicDAO)
 	userService := NewUserService(mockDAO)
 
@@ -202,7 +169,7 @@ func TestFindUserByUsername_Error(t *testing.T) {
 	// Expectation: FindByUsername is called with username and returns nil, errors.New("error")
 	mockDAO.On("FindByUsername", username).Return(nil, errors.New("error"))
 
-	user, err := userService.FindUserByUsername(username)
+	user, err := userService.GetUserByUsername(username)
 	assert.Nil(t, user)
 	assert.NotNil(t, err)
 

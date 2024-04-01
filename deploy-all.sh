@@ -3,17 +3,25 @@
 # Initialize default values
 DOCKER_USERNAME="kaiohenricunha"
 DOCKER_PASSWORD="default_password"
+DB_CLEANUP="false" # Default to not cleaning up the database
 
-# Parse command-line arguments for username and password
-while getopts u:p: flag
+# Parse command-line arguments for username, password, and cleanup flag
+while getopts u:p:c flag
 do
     case "${flag}" in
         u) DOCKER_USERNAME=${OPTARG};;
         p) DOCKER_PASSWORD=${OPTARG};;
+        c) DB_CLEANUP="true";;
     esac
 done
 
 echo "Using Docker Username: $DOCKER_USERNAME"
+if [ "$DB_CLEANUP" == "true" ]; then
+    echo "Database cleanup will be performed."
+fi
+
+# Pass the DB_CLEANUP variable to your Go application
+export DB_CLEANUP
 
 # Configuration variables
 IMAGE_NAME="go-music-k8s"
@@ -69,12 +77,13 @@ if [ $? -eq 0 ]; then
   kubectl delete deployment ${MUSICAPI_DEPLOYMENT_NAME} -n music-ns
 fi
 
-# call create-spotify-secret.sh
-./create-spotify-secret.sh
-
 # Deploy Music API to Minikube
 echo "Deploying Music API to Minikube..."
 kubectl apply -f "${MUSICAPI_DEPLOYMENT_YAML}/api-music-ns.yaml"
+
+## create Spotify and JWT secrets
+./create-secrets.sh
+
 kubectl apply -f "${MUSICAPI_DEPLOYMENT_YAML}/"
 
 # Wait for Music API deployment to complete

@@ -18,15 +18,18 @@ import (
 )
 
 var (
-	ErrSongNameRequired  = errors.New("song name and artist are required")
-	ErrSongAlreadyExists = errors.New("a song with the same name by the same artist already exists")
-	ErrSongNotFound      = errors.New("song not found")
-	// Adding Spotify API errors
+	ErrSongNameRequired    = errors.New("song name and artist are required")
+	ErrSongAlreadyExists   = errors.New("a song with the same name by the same artist already exists")
+	ErrSongNotFound        = errors.New("song not found")
+	ErrInvalidSongID       = errors.New("invalid song ID")
 	ErrFetchingFromSpotify = errors.New("error fetching data from Spotify")
 )
 
 type SongService interface {
+	CreateSong(song *model.Song) error
 	GetAllSongs() ([]model.Song, error)
+	GetSongByID(id string) (*model.Song, error)
+	GetSongByNameAndArtist(name, artist string) (*model.Song, error)
 	GetSongFromSpotifyByID(spotifyID string) (*model.Song, error)
 	SearchSongsFromSpotify(trackName, artistName string) ([]model.Song, error)
 }
@@ -48,8 +51,32 @@ func NewSongService(songDAO dao.MusicDAO) SongService {
 	return &songService{songDAO: songDAO, httpClient: httpClient}
 }
 
+// CreateSong creates a new song in the database.
+func (s *songService) CreateSong(song *model.Song) error {
+	// Validate the song name and artist
+	if song.Name == "" || song.Artist == "" {
+		return ErrSongNameRequired
+	}
+
+	// Check if a song with the same name by the same artist already exists
+	existingSong, err := s.songDAO.GetSongByNameAndArtist(song.Name, song.Artist)
+	if err != nil {
+		return err
+	}
+	if existingSong != nil {
+		return ErrSongAlreadyExists
+	}
+
+	// Create the song in the database
+	return s.songDAO.CreateSong(song)
+}
+
 func (s *songService) GetAllSongs() ([]model.Song, error) {
 	return s.songDAO.GetAllSongs()
+}
+
+func (s *songService) GetSongByNameAndArtist(name, artist string) (*model.Song, error) {
+	return s.songDAO.GetSongByNameAndArtist(name, artist)
 }
 
 // New method to get a song from Spotify by its ID
@@ -81,63 +108,35 @@ func (s *songService) GetSongFromSpotifyByID(spotifyID string) (*model.Song, err
 	return &song, nil
 }
 
-// SearchSongsFromSpotify searches for songs on Spotify based on track name and artist name.
 func (s *songService) SearchSongsFromSpotify(trackName, artistName string) ([]model.Song, error) {
-	// Check if the track name and artist name are provided
-	log.Printf("Searching for song: %s by artist: %s", trackName, artistName)
+	// Attempt to find the song in the local database first.
+	log.Printf("Searching for song: %s by artist: %s in the database", trackName, artistName)
+	existingSong, err := s.songDAO.GetSongByNameAndArtist(trackName, artistName)
+	if err == nil {
+		// If the song is found, return it in a slice.
+		log.Printf("Song found in the database: %s by %s", existingSong.Name, existingSong.Artist)
+		return []model.Song{*existingSong}, nil
+	} else if err != ErrSongNotFound {
+		// If an unexpected error occurs, it means the song is not yet in the local database.
+		// Log the error and proceed to search on Spotify.
+		log.Printf("Error searching for song in the database: %v", err)
+	}
 
-	// Construct the search query with track name and artist name
+	// Song not found locally, proceed to search on Spotify.
+	log.Printf("Searching for song: %s by artist: %s on Spotify", trackName, artistName)
 	query := url.QueryEscape(fmt.Sprintf("track:%s artist:%s", trackName, artistName))
+	requestURL := fmt.Sprintf("https://api.spotify.com/v1/search?q=%s&type=track", query)
 
-	// Construct the request URL with the encoded query
-	requestURL := fmt.Sprintf("https://api.spotify.com/v1/search?q=%s&type=track&include_external=audio", query)
-
-	log.Printf("Searching Song Request URL: %s\n", requestURL)
-
-	// Create and send the request to Spotify's search API
 	req, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		return nil, ErrFetchingFromSpotify
 	}
 
-	// Make the request using the httpClient
 	resp, err := s.httpClient.Do(req)
-	if err != nil {
+	if err != nil || resp.StatusCode != http.StatusOK {
 		return nil, ErrFetchingFromSpotify
 	}
 	defer resp.Body.Close()
-
-	// Check if the response status is OK
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err == nil {
-			fmt.Printf("Spotify Error Response: %s\n", string(bodyBytes))
-		}
-		return nil, ErrFetchingFromSpotify
-	}
-
-	// Define a struct to unmarshal the search results
-	type SpotifyTrackResponse struct {
-		Tracks struct {
-			Items []struct {
-				ID      string `json:"id"`
-				Name    string `json:"name"`
-				Artists []struct {
-					Name string `json:"name"`
-				} `json:"artists"`
-				Album struct {
-					Name   string `json:"name"`
-					Images []struct {
-						URL string `json:"url"`
-					} `json:"images"`
-				} `json:"album"`
-				PreviewURL   string `json:"preview_url"`
-				ExternalURLs struct {
-					Spotify string `json:"spotify"`
-				} `json:"external_urls"`
-			} `json:"items"`
-		} `json:"tracks"`
-	}
 
 	var spotifyResponse SpotifyTrackResponse
 	if err := json.NewDecoder(resp.Body).Decode(&spotifyResponse); err != nil {
@@ -146,30 +145,73 @@ func (s *songService) SearchSongsFromSpotify(trackName, artistName string) ([]mo
 
 	var songs []model.Song
 	for _, item := range spotifyResponse.Tracks.Items {
-		var artistNames []string
-		for _, artist := range item.Artists {
-			artistNames = append(artistNames, artist.Name)
-		}
-
-		var albumImageURL string
-		if len(item.Album.Images) > 0 {
-			albumImageURL = item.Album.Images[0].URL
+		// Assuming only the first artist is relevant.
+		firstArtistName := ""
+		if len(item.Artists) > 0 {
+			firstArtistName = item.Artists[0].Name
 		}
 
 		song := model.Song{
 			SpotifyID:     item.ID,
 			Name:          item.Name,
-			Artist:        strings.Join(artistNames, ", "),
+			Artist:        firstArtistName,
 			AlbumName:     item.Album.Name,
-			AlbumImageURL: albumImageURL,
+			AlbumImageURL: albumImageURLFrom([]struct{ URL string }(item.Album.Images)),
 			PreviewURL:    item.PreviewURL,
 			ExternalURL:   item.ExternalURLs.Spotify,
 		}
-
 		songs = append(songs, song)
+
+		// Add song to the database, assuming it wasn't found earlier.
+		log.Printf("Caching song '%s' by '%s' to the database", song.Name, song.Artist)
+		if dbErr := s.songDAO.CreateSong(&song); dbErr != nil {
+			log.Printf("Error adding song '%s' by '%s' to the database: %v", song.Name, song.Artist, dbErr)
+			// Opt to continue processing other songs despite the error.
+		}
 	}
 
 	return songs, nil
+}
+
+// Helper function to extract the album image URL from the Spotify response.
+func albumImageURLFrom(images []struct{ URL string }) string {
+	if len(images) > 0 {
+		return images[0].URL
+	}
+	return ""
+}
+
+// SpotifyTrackResponse struct for unmarshalling Spotify API response.
+type SpotifyTrackResponse struct {
+	Tracks struct {
+		Items []struct {
+			ID      string `json:"id"`
+			Name    string `json:"name"`
+			Artists []struct {
+				Name string `json:"name"`
+			} `json:"artists"`
+			Album struct {
+				Name   string `json:"name"`
+				Images []struct {
+					URL string `json:"url"`
+				} `json:"images"`
+			} `json:"album"`
+			PreviewURL   string `json:"preview_url"`
+			ExternalURLs struct {
+				Spotify string `json:"spotify"`
+			} `json:"external_urls"`
+		} `json:"items"`
+	} `json:"tracks"`
+}
+
+// GetSongByID retrieves a song from DB by its ID
+func (s *songService) GetSongByID(id string) (*model.Song, error) {
+	// Validate the song ID
+	if id == "" {
+		return nil, ErrInvalidSongID
+	}
+
+	return s.songDAO.GetSongByID(id)
 }
 
 // parseSpotifyResponseToSongModel takes an io.Reader (the body of the HTTP response) and populates the provided Song model with data parsed from the response.

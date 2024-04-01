@@ -6,17 +6,17 @@ import (
 
 type MusicDAO interface {
 	CreateUser(user *model.User) error
-	UpdateUser(user *model.User) error
-	DeleteUser(userID uint) error
 	GetAllUsers() ([]model.User, error)
-	FindByUsername(username string) (*model.User, error)
-	FindUserByID(userID uint) (*model.User, error)
+	GetUserByUsername(username string) (*model.User, error)
+	GetUserByID(userID uint) (*model.User, error)
 
+	CreateSong(song *model.Song) error
 	GetAllSongs() ([]model.Song, error)
+	GetSongByID(songID string) (*model.Song, error)
+	GetSongByNameAndArtist(songName, artistName string) (*model.Song, error)
 	GetSongFromSpotifyByID(spotifyID string) (*model.Song, error)
 	SearchSongsFromSpotify(trackName, artistName string) ([]model.Song, error)
-	CreatePlaylist(playlist *model.Playlist) error
-	AddSongToPlaylist(playlistID, songID uint) error
-	GetPlaylistByNameAndUserID(playlistName string, userID uint) (*model.Playlist, error)
+
 	GetAllPlaylists() ([]model.Playlist, error)
+	GetPlaylistByID(playlistID string) (*model.Playlist, error)
 }

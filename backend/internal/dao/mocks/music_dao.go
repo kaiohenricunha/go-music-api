@@ -28,36 +28,8 @@ func (_m *MusicDAO) CreateUser(user *model.User) error {
 	return r0
 }
 
-// UpdateUser mocks the UpdateUser method
-func (_m *MusicDAO) UpdateUser(user *model.User) error {
-	ret := _m.Called(user)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.User) error); ok {
-		r0 = rf(user)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteUser mocks the DeleteUser method
-func (_m *MusicDAO) DeleteUser(userID uint) error {
-	ret := _m.Called(userID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(uint) error); ok {
-		r0 = rf(userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// FindUserByID mocks the FindUserByID method
-func (_m *MusicDAO) FindUserByID(userID uint) (*model.User, error) {
+// GetUserByID mocks the GetUserByID method
+func (_m *MusicDAO) GetUserByID(userID uint) (*model.User, error) {
 	ret := _m.Called(userID)
 
 	var r0 *model.User
@@ -102,8 +74,8 @@ func (_m *MusicDAO) GetAllUsers() ([]model.User, error) {
 	return r0, r1
 }
 
-// FindByUsername mocks the FindByUsername method
-func (_m *MusicDAO) FindByUsername(username string) (*model.User, error) {
+// GetUserByUsername mocks the GetUserByUsername method
+func (_m *MusicDAO) GetUserByUsername(username string) (*model.User, error) {
 	ret := _m.Called(username)
 
 	var r0 *model.User
@@ -129,6 +101,20 @@ func (_m *MusicDAO) FindByUsername(username string) (*model.User, error) {
 // SONG METHODS //
 ////////////////////////////////
 
+// CreateSong mocks the CreateSong method
+func (_m *MusicDAO) CreateSong(song *model.Song) error {
+	ret := _m.Called(song)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.Song) error); ok {
+		r0 = rf(song)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetAllSongs mocks the GetAllSongs method
 func (_m *MusicDAO) GetAllSongs() ([]model.Song, error) {
 	ret := _m.Called()
@@ -145,6 +131,52 @@ func (_m *MusicDAO) GetAllSongs() ([]model.Song, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSongByID mocks the GetSongByID method
+func (_m *MusicDAO) GetSongByID(songID string) (*model.Song, error) {
+	ret := _m.Called(songID)
+
+	var r0 *model.Song
+	if rf, ok := ret.Get(0).(func(string) *model.Song); ok {
+		r0 = rf(songID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Song)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(songID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSongByNameAndArtist mocks the GetSongByNameAndArtist method
+func (_m *MusicDAO) GetSongByNameAndArtist(songName, artistName string) (*model.Song, error) {
+	ret := _m.Called(songName, artistName)
+
+	var r0 *model.Song
+	if rf, ok := ret.Get(0).(func(string, string) *model.Song); ok {
+		r0 = rf(songName, artistName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Song)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(songName, artistName)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -202,55 +234,13 @@ func (_m *MusicDAO) SearchSongsFromSpotify(trackName, artistName string) ([]mode
 // PLAYLIST METHODS //
 ////////////////////////////////
 
-// CreatePlaylist mocks the CreatePlaylist method
-func (_m *MusicDAO) CreatePlaylist(playlist *model.Playlist) error {
-	ret := _m.Called(playlist)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Playlist) error); ok {
-		r0 = rf(playlist)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// AddSongToPlaylist mocks the AddSongToPlaylist method
-func (_m *MusicDAO) AddSongToPlaylist(playlistID, songID uint) error {
-	ret := _m.Called(playlistID, songID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(uint, uint) error); ok {
-		r0 = rf(playlistID, songID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// RemoveSongFromPlaylist mocks the RemoveSongFromPlaylist method
-func (_m *MusicDAO) RemoveSongFromPlaylist(playlistID, songID uint) error {
-	ret := _m.Called(playlistID, songID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(uint, uint) error); ok {
-		r0 = rf(playlistID, songID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// GetPlaylistByNameAndUserID mocks the GetPlaylistByNameAndUserID method
-func (_m *MusicDAO) GetPlaylistByNameAndUserID(playlistName string, userID uint) (*model.Playlist, error) {
-	ret := _m.Called(playlistName, userID)
+// GetPlaylistByID mocks the GetPlaylistByID method
+func (_m *MusicDAO) GetPlaylistByID(playlistID string) (*model.Playlist, error) {
+	ret := _m.Called(playlistID)
 
 	var r0 *model.Playlist
-	if rf, ok := ret.Get(0).(func(string, uint) *model.Playlist); ok {
-		r0 = rf(playlistName, userID)
+	if rf, ok := ret.Get(0).(func(string) *model.Playlist); ok {
+		r0 = rf(playlistID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Playlist)
@@ -258,8 +248,8 @@ func (_m *MusicDAO) GetPlaylistByNameAndUserID(playlistName string, userID uint)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, uint) error); ok {
-		r1 = rf(playlistName, userID)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(playlistID)
 	} else {
 		r1 = ret.Error(1)
 	}

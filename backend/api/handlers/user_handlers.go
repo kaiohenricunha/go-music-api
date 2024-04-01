@@ -2,13 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/kaiohenricunha/go-music-k8s/backend/api"
-	"github.com/kaiohenricunha/go-music-k8s/backend/api/middleware"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/service"
 )
@@ -43,16 +40,7 @@ func (h *UserHandlers) RegisterUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Prepare user data for the response, excluding the password
-	responseUser := map[string]interface{}{
-		"ID":        user.ID,
-		"Username":  user.Username,
-		"CreatedAt": user.CreatedAt,
-		"UpdatedAt": user.UpdatedAt,
-	}
-
-	// Respond with the user object instead of just a success message
-	api.RespondWithJSON(w, http.StatusCreated, responseUser)
+	api.RespondWithJSON(w, http.StatusCreated, map[string]string{"message": "User registered successfully"})
 }
 
 // ListUsersHandler handles requests to list all users.
@@ -79,66 +67,10 @@ func (h *UserHandlers) ListUsersHandler(w http.ResponseWriter, r *http.Request) 
 	api.RespondWithJSON(w, http.StatusOK, response)
 }
 
-// UpdateUserHandler handles requests to update a user.
-func (h *UserHandlers) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	requestUserID, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		api.LogErrorWithDetails(w, "Invalid user ID", err, http.StatusBadRequest)
-		return
-	}
-
-	authUserID, ok := r.Context().Value(middleware.UserContextKey).(uint)
-	log.Println(authUserID)
-	if !ok || authUserID != uint(requestUserID) {
-		api.LogErrorAndRespond(w, "Unauthorized to update this user", http.StatusUnauthorized)
-		return
-	}
-
-	var user model.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		api.LogErrorWithDetails(w, "Error decoding user data", err, http.StatusBadRequest)
-		return
-	}
-
-	user.ID = uint(requestUserID) // Ensuring the user ID is correctly set
-	err = h.userService.UpdateUser(&user)
-	if err != nil {
-		api.LogErrorWithDetails(w, "Failed to update user", err, http.StatusInternalServerError)
-		return
-	}
-
-	api.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "User updated successfully"})
-}
-
-// DeleteUserHandler handles requests to delete a user.
-func (h *UserHandlers) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		api.LogErrorWithDetails(w, "Invalid user ID", err, http.StatusBadRequest)
-		return
-	}
-
-	authUserID, ok := r.Context().Value(middleware.UserContextKey).(uint)
-	if !ok || authUserID != uint(userID) {
-		api.LogErrorAndRespond(w, "Unauthorized to delete this user", http.StatusUnauthorized)
-		return
-	}
-
-	err = h.userService.DeleteUser(uint(userID))
-	if err != nil {
-		api.LogErrorWithDetails(w, "Failed to delete user", err, http.StatusInternalServerError)
-		return
-	}
-
-	api.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "User deleted successfully"})
-}
-
-// FindUserByUsernameHandler handles requests to find a user by their username.
-func (h *UserHandlers) FindUserByUsernameHandler(w http.ResponseWriter, r *http.Request) {
+// GetUserByUsername handles requests to find a user by their username.
+func (h *UserHandlers) GetUserByUsername(w http.ResponseWriter, r *http.Request) {
 	username := mux.Vars(r)["username"]
-	user, err := h.userService.FindUserByUsername(username)
+	user, err := h.userService.GetUserByUsername(username)
 	if err != nil {
 		if err == service.ErrUserNotFound {
 			api.LogErrorAndRespond(w, "User not found", http.StatusNotFound)
@@ -158,4 +90,28 @@ func (h *UserHandlers) FindUserByUsernameHandler(w http.ResponseWriter, r *http.
 	}
 
 	api.RespondWithJSON(w, http.StatusOK, userMap)
+}
+
+// UserLoginHandler handles the user login requests.
+func (h *UserHandlers) UserLoginHandler(w http.ResponseWriter, r *http.Request) {
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		http.Error(w, "Missing credentials", http.StatusBadRequest)
+		return
+	}
+
+	userID, valid := h.userService.ValidateUser(username, password)
+	if !valid {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
+
+	// Generate JWT for the user
+	token, err := api.GenerateJWT(userID)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
+	api.RespondWithJSON(w, http.StatusOK, map[string]string{"token": token})
 }
