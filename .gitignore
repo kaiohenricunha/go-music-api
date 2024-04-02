@@ -102,19 +102,20 @@ temp/
 
 comments.md
 create-secrets.sh
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# React Dependencies
+# dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# Testing
+# testing
 /coverage
 
-# Production
+# production
 /build
 
-# Misc
+# misc
 .DS_Store
 .env.local
 .env.development.local
@@ -124,31 +125,3 @@ create-secrets.sh
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# misc
-*.swp
-*.swo
-*.tmp
-*~
-*.lock
-
-# macOS
-._*
-.Spotlight-V100
-.Trashes
