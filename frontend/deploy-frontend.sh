@@ -3,13 +3,12 @@
 # Initialize default values
 DOCKER_USERNAME="kaiohenricunha"
 DOCKER_PASSWORD="default_password"
-IMAGE_NAME_BACKEND="go-music-k8s"
 IMAGE_NAME_FRONTEND="react-music-app"
 VERSION="latest"
 FRONTEND_DEPLOYMENT_NAME="react-frontend"
-FRONTEND_DEPLOYMENT_YAML="../deploy/k8s/frontend"
+FRONTEND_DEPLOYMENT_YAML="deploy/k8s/frontend"
 
-# Parse command-line arguments for username and password flag
+# Parse command-line arguments for username, password flags
 while getopts u:p: flag
 do
     case "${flag}" in
@@ -25,6 +24,7 @@ minikube status &> /dev/null
 if [ $? -ne 0 ]; then
   echo "Minikube is not running, starting Minikube..."
   minikube start
+  minikube addons enable ingress && minikube addons enable ingress-dns && minikube addons enable metrics-server
 else
   echo "Minikube is already running."
 fi
@@ -44,11 +44,13 @@ docker push "${DOCKER_USERNAME}/${IMAGE_NAME_FRONTEND}:${VERSION}"
 # Deploy to Minikube
 
 ## Frontend
-echo "Deleting existing React Frontend deployment..."
-kubectl delete deployment ${FRONTEND_DEPLOYMENT_NAME} -n music-ns
 echo "Deploying React Frontend to Minikube..."
-kubectl apply -f "${FRONTEND_DEPLOYMENT_YAML}"
+
+cd ..
+
+kubectl apply -f ${FRONTEND_DEPLOYMENT_YAML} -n music-ns
 echo "Waiting for React Frontend deployment to complete..."
+kubectl delete pods --selector=app=react-frontend -n music-ns
 kubectl rollout status deployment/${FRONTEND_DEPLOYMENT_NAME} -n music-ns
 
 echo "Deployment completed successfully."

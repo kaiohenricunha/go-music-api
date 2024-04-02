@@ -40,6 +40,7 @@ minikube status &> /dev/null
 if [ $? -ne 0 ]; then
   echo "Minikube is not running, starting Minikube..."
   minikube start
+  minikube addons enable ingress && minikube addons enable ingress-dns && minikube addons enable metrics-server
 else
   echo "Minikube is already running."
 fi
@@ -77,6 +78,7 @@ kubectl rollout status deployment/${MYSQL_DEPLOYMENT_NAME} -n db-ns
 
 ## Backend API
 echo "Deploying Music API to Minikube..."
+kubectl delete deployment ${MUSICAPI_DEPLOYMENT_NAME} -n music-ns
 kubectl apply -f "${MUSICAPI_DEPLOYMENT_YAML}/api-music-ns.yaml"
 ./create-secrets.sh
 kubectl apply -f "${MUSICAPI_DEPLOYMENT_YAML}/"
@@ -85,8 +87,15 @@ kubectl rollout status deployment/${MUSICAPI_DEPLOYMENT_NAME} -n music-ns
 
 ## Frontend
 echo "Deploying React Frontend to Minikube..."
+kubectl delete deployment ${FRONTEND_DEPLOYMENT_NAME} -n music-ns
 kubectl apply -f "${FRONTEND_DEPLOYMENT_YAML}"
 echo "Waiting for React Frontend deployment to complete..."
 kubectl rollout status deployment/${FRONTEND_DEPLOYMENT_NAME} -n music-ns
 
 echo "Deployment completed successfully."
+
+MINIKUBE_IP=$(minikube ip)
+echo "To update /etc/hosts, please run the following command with root permissions:"
+echo "echo '$MINIKUBE_IP musicapi.local' | sudo tee -a /etc/hosts"
+
+kubectl port-forward service/react-frontend-service 3000:3000 -n music-ns

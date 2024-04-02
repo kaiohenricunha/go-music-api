@@ -4,6 +4,8 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
+	FullName  string     `json:"full_name"`
+	Email     string     `gorm:"unique" json:"email"`
 	Username  string     `gorm:"unique"`
 	Password  string     // Hashed password
 	Playlists []Playlist `gorm:"foreignKey:UserID" json:"playlists"`
