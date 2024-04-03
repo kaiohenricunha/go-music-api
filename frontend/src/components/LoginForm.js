@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // This will be used for redirection
 import { useAuth } from '../authContext';
+import './LoginForm.css';
 
 function LoginForm() {
   const [username, setUsername] = useState('');
