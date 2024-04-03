@@ -3,8 +3,15 @@
 :root {
     --color-white: #f3f3f3;
     --color-darkblue: #1b1b32;
+    --color-light-blue: #5A708C;
+    --color-light-blue-alpha: rgba(90, 112, 140, 0.8);
     --color-darkblue-alpha: rgba(27, 27, 50, 0.8);
     --color-green: #37af65;
+    --color-rose: #ff69b4;
+    --color-rose-alpha: rgba(255, 192, 203, 0.8);
+    --color-darker-rose-alpha: rgba(228, 108, 128, 0.9);
+    --color-black: #000;
+    --color-black-alpha: rgba(0, 0, 0, 0.8);
 }
 
 *,
@@ -34,11 +41,11 @@ body::before {
     height: 100%;
     width: 100%;
     z-index: -1;
-    background: var(--color-darkblue);
+    background: var(--color-light-blue);
     background-image: linear-gradient(
             115deg,
-            rgba(58, 58, 158, 0.8),
-            rgba(136, 136, 206, 0.7)
+            rgba(201, 53, 78, 0.9),
+            rgba(255, 192, 203, 0.8)
     ),
     url(https://ableton-production.imgix.net/live/creation-space-front-10.jpg?auto=compress%2Cformat&w=768);
     background-size: cover;
@@ -121,7 +128,7 @@ button {
 }
 
 form {
-    background: var(--color-darkblue-alpha);
+    background: var(--color-black-alpha);
     padding: 2.5rem 0.625rem;
     border-radius: 0.25rem;
 }
@@ -175,47 +182,12 @@ form {
     display: block;
     width: 100%;
     padding: 0.75rem;
-    background: var(--color-green);
-    color: inherit;
+    background-color: var(--color-black); /* Black background for buttons */
+    color: var(--color-white); /* White text for contrast */
     border-radius: 2px;
     cursor: pointer;
 }
 
-/* Header Styles */
-header {
-    background: var(--color-darkblue-alpha); /* Semi-transparent background */
-    color: var(--color-white);
-    padding: 1rem 2rem; /* Adjust padding as needed */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10; /* Ensure it stays above other content */
-    display: flex;
-    justify-content: space-between; /* Adjust based on your nav layout */
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Soft shadow for depth */
-  }
-  
-  header a {
-    color: var(--color-white);
-    text-decoration: none; /* Remove underlines from links */
-    margin: 0 1rem; /* Space out links */
-    font-weight: bold; /* Make the links stand out */
-  }
-  
-  header a:hover {
-    color: var(--color-green); /* Highlight links on hover */
-  }
-  
-  /* Responsive adjustments for smaller screens */
-  @media (max-width: 768px) {
-    header {
-      flex-direction: column;
-    }
-  
-    header a {
-      margin: 0.5rem 0; /* Stack links vertically with space */
-    }
-  }
-  
+.submit-button:hover {
+    background-color: var(--color-rose); /* Rose color on hover */
+}

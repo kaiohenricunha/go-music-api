@@ -35,9 +35,6 @@ function LoginForm() {
 
   return (
     <div className="container">
-      <header className="header">
-        <h1 id="title" className="text-center">Login Page</h1>
-      </header>
       <form onSubmit={handleLogin}>
         <div className="form-group">
           <label id="username-label" htmlFor="username">Username</label>

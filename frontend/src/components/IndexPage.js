@@ -5,9 +5,12 @@ import { Link } from 'react-router-dom';
 function IndexPage() {
   return (
     <div className="container">
-      {/* Page content */}
+        <h1 id="title" className="text-center">Musilist</h1>
+        <p id="description" className="description text-center">
+          Dive into the world of Musilist, where music curation meets community wisdom.
+        </p>
       <div className="text-center">
-        <Link to="/register"><h3>Enter Now</h3></Link>
+        <Link to="/register" className="enter-now-link">Enter Now</Link>
       </div>
     </div>
   );
