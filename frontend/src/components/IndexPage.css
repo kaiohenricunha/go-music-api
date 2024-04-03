@@ -180,3 +180,42 @@ form {
     border-radius: 2px;
     cursor: pointer;
 }
+
+/* Header Styles */
+header {
+    background: var(--color-darkblue-alpha); /* Semi-transparent background */
+    color: var(--color-white);
+    padding: 1rem 2rem; /* Adjust padding as needed */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10; /* Ensure it stays above other content */
+    display: flex;
+    justify-content: space-between; /* Adjust based on your nav layout */
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Soft shadow for depth */
+  }
+  
+  header a {
+    color: var(--color-white);
+    text-decoration: none; /* Remove underlines from links */
+    margin: 0 1rem; /* Space out links */
+    font-weight: bold; /* Make the links stand out */
+  }
+  
+  header a:hover {
+    color: var(--color-green); /* Highlight links on hover */
+  }
+  
+  /* Responsive adjustments for smaller screens */
+  @media (max-width: 768px) {
+    header {
+      flex-direction: column;
+    }
+  
+    header a {
+      margin: 0.5rem 0; /* Stack links vertically with space */
+    }
+  }
+  

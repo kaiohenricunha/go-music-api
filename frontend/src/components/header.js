@@ -4,7 +4,6 @@ import React from 'react';
 function Header() {
   return (
     <header>
-      {/* Other header content */}
       <nav>
         <ul>
           <li><Link to="/">Home</Link></li>

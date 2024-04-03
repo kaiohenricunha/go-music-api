@@ -13,8 +13,8 @@ var (
 	// ErrUserNotFound is returned when a user is not found.
 	ErrUserNotFound = errors.New("user not found")
 
-	// ErrUsernameTaken is returned when the username is already used by another user.
-	ErrUsernameTaken = errors.New("username already taken")
+	// ErrUsernameOrEmailTaken is returned when a username or email is already taken.
+	ErrUsernameOrEmailTaken = errors.New("username or email already taken")
 
 	// ErrInvalidCredentials is returned when the username or password is incorrect.
 	ErrInvalidCredentials = errors.New("invalid username or password")
@@ -59,7 +59,9 @@ func (us *userService) RegisterUser(user *model.User) error {
 	// Check if username already exists
 	existingUser, _ := us.GetUserByUsername(user.Username)
 	if existingUser != nil {
-		return ErrUsernameTaken
+		if user.Email == existingUser.Email {
+			return ErrUsernameOrEmailTaken
+		}
 	}
 
 	// Hash the password

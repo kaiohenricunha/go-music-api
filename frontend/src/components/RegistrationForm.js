@@ -8,7 +8,7 @@ function RegistrationForm() {
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('');
     const [message, setMessage] = useState('');
-    const [isError, setIsError] = useState(false); // Additional state to track if the message is an error
+    const [isError, setIsError] = useState(false);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -52,11 +52,8 @@ function RegistrationForm() {
             if (!response.ok) {
                 throw new Error(data.message || 'Registration failed. Please try again.');
             }
-            console.log('Message:', message, 'Error:', isError);
             setMessage('Registration successful. Please log in.');
         } catch (error) {
-            console.log('Message:', message, 'Error:', isError);
-            console.error('Error:', error);
             setMessage(error.toString());
             setIsError(true); // Set error state to true
         }

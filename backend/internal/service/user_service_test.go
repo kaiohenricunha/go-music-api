@@ -35,7 +35,7 @@ func TestRegisterUser(t *testing.T) {
 	mockDAO.On("GetUserByUsername", "testUser").Return(testUser, nil) // Simulate user existing
 
 	err = userService.RegisterUser(testUser)
-	assert.Equal(t, ErrUsernameTaken, err)
+	assert.Equal(t, ErrUsernameOrEmailTaken, err)
 	mockDAO.AssertExpectations(t)
 }
 
@@ -107,7 +107,7 @@ func TestGetUserByUsername(t *testing.T) {
 	// Scenario 1: Successfully retrieve a user by username
 	mockDAO.On("GetUserByUsername", "testUser").Return(testUser, nil) // Simulates user exists
 	err := userService.RegisterUser(testUser)
-	assert.Equal(t, ErrUsernameTaken, err) // Verifies the correct error is returned
+	assert.Equal(t, ErrUsernameOrEmailTaken, err) // Verifies the correct error is returned
 
 	// Scenario 2: User not found
 	mockDAO.On("GetUserByUsername", "nonExistingUser").Return(nil, ErrUserNotFound)

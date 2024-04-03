@@ -1,4 +1,3 @@
-// src/components/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../authContext'; // Adjust the import path as necessary
 
@@ -31,7 +30,7 @@ const Dashboard = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setSearchResults(data.songs); // Assuming the backend returns an array of songs
+        setSearchResults(data.songs);
       } else {
         console.error("Failed to fetch search results");
         setSearchResults([]);
