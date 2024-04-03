@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // This will be used for redirection
 import { useAuth } from '../authContext';
 
-function LoginForm({ onLoginSuccess }) {
+function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login } = useAuth();
-  const apiEndpoint = `${process.env.REACT_APP_API_URL}/api/v1/login`; // use .env to store the API endpoint base URL
+  const navigate = useNavigate(); // Initialized for redirection
+  const apiEndpoint = `${process.env.REACT_APP_API_URL}/api/v1/login`;
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -22,8 +24,7 @@ function LoginForm({ onLoginSuccess }) {
       if (response.ok) {
         const data = await response.json();
         login(data.token); // Use the login function from context
-        window.location.href = '/dashboard'; // Redirect to dashboard after login
-        onLoginSuccess(data.token);
+        navigate('/dashboard'); // Redirect to dashboard after login
       } else {
         alert('Login failed!');
       }
@@ -33,25 +34,43 @@ function LoginForm({ onLoginSuccess }) {
   };
 
   return (
-    <div className="login-container">
+    <div className="container">
+      <header className="header">
+        <h1 id="title" className="text-center">Login Page</h1>
+      </header>
       <form onSubmit={handleLogin}>
-        <div>
-          <label>Username</label>
+        <div className="form-group">
+          <label id="username-label" htmlFor="username">Username</label>
           <input
             type="text"
+            name="username"
+            id="username"
+            className="form-control"
+            placeholder="Type your username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            required
           />
         </div>
-        <div>
-          <label>Password</label>
+        <div className="form-group">
+          <label id="password-label" htmlFor="password">Password</label>
           <input
             type="password"
+            name="password"
+            id="password"
+            className="form-control"
+            placeholder="Type your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
-        <button type="submit">Login</button>
+        <div className="form-group">
+          <input id="submit" className="submit-button" type="submit" value="Login" />
+        </div>
+        <div className="text-center">
+          <a href="/register">Register</a> {/* Use Link component for SPA */}
+        </div>
       </form>
     </div>
   );
