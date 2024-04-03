@@ -2,12 +2,12 @@
 
 :root {
     --color-white: #f3f3f3;
+    --color-white-alpha: rgba(243, 243, 243, 0.8);
     --color-darkblue: #1b1b32;
     --color-light-blue: #5A708C;
     --color-light-blue-alpha: rgba(90, 112, 140, 0.8);
     --color-darkblue-alpha: rgba(27, 27, 50, 0.8);
     --color-green: #37af65;
-    --color-rose: #ff69b4;
     --color-rose-alpha: rgba(255, 192, 203, 0.8);
     --color-darker-rose-alpha: rgba(228, 108, 128, 0.9);
     --color-black: #000;
@@ -25,7 +25,7 @@ body, a {
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.4;
-    color: var(--color-white);
+    color: var(--color-black);
     margin: 0;
 }
 
@@ -128,7 +128,7 @@ button {
 }
 
 form {
-    background: var(--color-black-alpha);
+    background: var(--color-white-alpha);
     padding: 2.5rem 0.625rem;
     border-radius: 0.25rem;
 }
@@ -189,5 +189,5 @@ form {
 }
 
 .submit-button:hover {
-    background-color: var(--color-rose); /* Rose color on hover */
+    background-color: rgba(255, 192, 203, 0.8)
 }
