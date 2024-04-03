@@ -1,14 +1,16 @@
 package routes
 
 import (
+	"net/http"
+
+	goHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kaiohenricunha/go-music-k8s/backend/api/handlers"
 	"github.com/kaiohenricunha/go-music-k8s/backend/api/middleware"
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/service"
 )
 
-// SetupRoutes configures and returns a new router with all routes defined.
-func SetupRoutes(userService service.UserService, songService service.SongService, playlistService service.PlaylistService) *mux.Router {
+func SetupRoutes(userService service.UserService, songService service.SongService, playlistService service.PlaylistService) http.Handler {
 	r := mux.NewRouter()
 
 	// Middleware for JWT Auth
@@ -48,5 +50,14 @@ func SetupRoutes(userService service.UserService, songService service.SongServic
 	protectedRouter.HandleFunc("/playlists/{playlistID}/songs/{songID}", playlistHandlers.AddSongToPlaylistHandler).Methods("POST")
 	protectedRouter.HandleFunc("/playlists/{playlistID}/songs/{songID}", playlistHandlers.RemoveSongFromPlaylistHandler).Methods("DELETE")
 
-	return r
+	// Wrap the entire router with CORS middleware
+	corsMiddleware := goHandlers.CORS(
+		goHandlers.AllowedOrigins([]string{"http://localhost:3000"}),
+		goHandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		goHandlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}),
+		goHandlers.AllowCredentials(),
+	)
+
+	// Apply CORS middleware to the router and return
+	return corsMiddleware(r)
 }
