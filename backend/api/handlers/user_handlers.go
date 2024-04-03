@@ -60,6 +60,9 @@ func (h *UserHandlers) ListUsersHandler(w http.ResponseWriter, r *http.Request) 
 			"UpdatedAt": user.UpdatedAt,
 			"Username":  user.Username,
 			"Playlists": user.Playlists,
+			"Role":      user.Role,
+			"FullName":  user.FullName,
+			"Email":     user.Email,
 		}
 		response = append(response, userMap)
 	}
@@ -87,6 +90,9 @@ func (h *UserHandlers) GetUserByUsername(w http.ResponseWriter, r *http.Request)
 		"UpdatedAt": user.UpdatedAt,
 		"Username":  user.Username,
 		"Playlists": user.Playlists,
+		"Role":      user.Role,
+		"FullName":  user.FullName,
+		"Email":     user.Email,
 	}
 
 	api.RespondWithJSON(w, http.StatusOK, userMap)

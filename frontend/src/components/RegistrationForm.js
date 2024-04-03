@@ -1,47 +1,50 @@
-import React, {useState,setState} from 'react';
-import './style.css'
+import React, { useState } from 'react';
+import './RegistrationForm.css';
+
 function RegistrationForm() {
-    
-    const [fullName, setFullName] = useState(null);
-    const [email, setEmail] = useState(null);
-    const [username, setUsername] = useState(null);
-    const [password,setPassword] = useState(null);
-    const [confirmPassword,setConfirmPassword] = useState(null);
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [role, setRole] = useState('');
 
     const handleInputChange = (e) => {
-        const {id , value} = e.target;
-        if(id === "fullName"){
-            setFullName(value);
+        const { name, value } = e.target;
+        switch (name) {
+            case 'name':
+                setFullName(value);
+                break;
+            case 'email':
+                setEmail(value);
+                break;
+            case 'username':
+                setUsername(value);
+                break;
+            case 'password':
+                setPassword(value);
+                break;
+            case 'role':
+                setRole(value);
+                break;
+            default:
+                break;
         }
-        if(id === "email"){
-            setEmail(value);
-        }
-        if(id === "username"){
-            setUsername(value);
-        }
-        if(id === "password"){
-            setPassword(value);
-        }
-        if(id === "confirmPassword"){
-            setConfirmPassword(value);
-        }
-
-    }
+    };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        console.log("Submit button clicked"); // Confirm function is triggered
+        console.log("Submit button clicked");
         let obj = {
-            fullName: fullName,
+            full_name: fullName,
             email: email,
             username: username,
             password: password,
-            confirmPassword: confirmPassword,
+            role: role,
         };
 
-        console.log("Submitting registration data:", obj); // Log data being sent
-    
-        // Define the API endpoint    
+        console.log("Submitting registration data:", obj);
+
+        // use .env to store the API endpoint base URL
         const apiEndpoint = `${process.env.REACT_APP_API_URL}/api/v1/register`;
         try {
             const response = await fetch(apiEndpoint, {
@@ -51,7 +54,7 @@ function RegistrationForm() {
                 },
                 body: JSON.stringify(obj),
             });
-    
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('Registration successful', data);
@@ -61,39 +64,87 @@ function RegistrationForm() {
         } catch (error) {
             console.error('Error submitting registration', error);
         }
-    }
+    };
 
-    return(
-      <div className="form">
-          <div className="form-body">
-              <div className="name">
-                  <label className="form__label" htmlFor="fullName">Full Name </label>
-                  <input className="form__input" type="text" value={fullName} onChange={(e) => handleInputChange(e)} id="fullName" placeholder="Full Name"/>
-              </div>
-              <div className="email">
-                  <label className="form__label" htmlFor="email">Email </label>
-                    <input className="form__input" type="email" id="email" value={email} onChange = {(e) => handleInputChange(e)} placeholder="Email"/>
-              </div>
-                <div className="usernam">
-                    <label className="form__label" htmlFor="username">Username </label>
-                    <input className="form__input" type="text" id="username" value={username} onChange = {(e) => handleInputChange(e)} placeholder="Username"/>
+    return (
+        <div className="container">
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label htmlFor="name">Full Name</label>
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        className="form-control"
+                        placeholder="Type your full name"
+                        value={fullName}
+                        onChange={handleInputChange}
+                        required
+                    />
                 </div>
-              <div className="password">
-                  <label className="form__label" htmlFor="password">Password </label>
-                    <input className="form__input" type="password" id="password" value={password} onChange = {(e) => handleInputChange(e)} placeholder="Password"/>
-              </div>
-              <div className="confirm-password">
-                  <label className="form__label" htmlFor="confirmPassword">Confirm Password </label>
-                  <input className="form__input" type="password" id="confirmPassword" value={confirmPassword} onChange = {(e) => handleInputChange(e)} placeholder="Confirm Password"/>
-              </div>
-          </div>
-          <div className="footer">
-                <button onClick={(e) => handleSubmit(e)} className="btn">Register</button>
-                <button onClick={() => console.log('Test button clicked')}>Test Log</button>
-          </div>
+                <div className="form-group">
+                    <label htmlFor="email">Email</label>
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        className="form-control"
+                        placeholder="Type your email"
+                        value={email}
+                        onChange={handleInputChange}
+                        required
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="username">Username</label>
+                    <input
+                        type="text"
+                        name="username"
+                        id="username"
+                        className="form-control"
+                        placeholder="Type your username"
+                        value={username}
+                        onChange={handleInputChange}
+                        required
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="password">Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        className="form-control"
+                        placeholder="Type your password"
+                        value={password}
+                        onChange={handleInputChange}
+                        required
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="role">What option best defines you?</label>
+                    <select
+                        id="role"
+                        name="role"
+                        className="form-control"
+                        value={role}
+                        onChange={handleInputChange}
+                        required
+                    >
+                        <option disabled value="">Select your current status</option>
+                        <option value="student">Music Student</option>
+                        <option value="amateur">Amateur Musician</option>
+                        <option value="professional">Professional Musician</option>
+                        <option value="songwriter">Songwriter</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div className="form-group">
+                    <button type="submit" className="submit-button">Register</button>
+                </div>
+            </form>
         </div>
-       
-    )       
+    );
 }
 
-export default RegistrationForm
+export default RegistrationForm;

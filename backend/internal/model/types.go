@@ -6,8 +6,9 @@ type User struct {
 	gorm.Model
 	FullName  string     `json:"full_name"`
 	Email     string     `gorm:"unique" json:"email"`
-	Username  string     `gorm:"unique"`
-	Password  string     // Hashed password
+	Username  string     `gorm:"unique" json:"username"`
+	Password  string     // Consider storing hashed passwords only
+	Role      string     `json:"role"`
 	Playlists []Playlist `gorm:"foreignKey:UserID" json:"playlists"`
 }
 
