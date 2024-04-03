@@ -180,3 +180,27 @@ form {
     border-radius: 2px;
     cursor: pointer;
 }
+
+.error-message {
+    color: #ff3860; /* Bright red for errors */
+    background-color: #ffe5e5; /* Light red background */
+    border: 1px solid #ff3860; /* Border color similar to text color */
+    padding: 10px;
+    border-radius: 5px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.success-message {
+    color: #23d160; /* Bright green for success */
+    background-color: #e8ffec; /* Light green background */
+    border: 1px solid #23d160; /* Border color similar to text color */
+    padding: 10px;
+    border-radius: 5px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.error-message, .success-message {
+    z-index: 1000; /* Ensures it's above most other elements */
+}

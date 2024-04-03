@@ -7,6 +7,8 @@ function RegistrationForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('');
+    const [message, setMessage] = useState('');
+    const [isError, setIsError] = useState(false); // Additional state to track if the message is an error
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -33,18 +35,9 @@ function RegistrationForm() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        console.log("Submit button clicked");
-        let obj = {
-            full_name: fullName,
-            email: email,
-            username: username,
-            password: password,
-            role: role,
-        };
+        setMessage(''); // Clear previous message
+        setIsError(false); // Reset error state
 
-        console.log("Submitting registration data:", obj);
-
-        // use .env to store the API endpoint base URL
         const apiEndpoint = `${process.env.REACT_APP_API_URL}/api/v1/register`;
         try {
             const response = await fetch(apiEndpoint, {
@@ -52,17 +45,20 @@ function RegistrationForm() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(obj),
+                body: JSON.stringify({ fullName, email, username, password, role }),
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Registration successful', data);
-            } else {
-                console.error('Registration failed', response.statusText);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Registration failed. Please try again.');
             }
+            console.log('Message:', message, 'Error:', isError);
+            setMessage('Registration successful. Please log in.');
         } catch (error) {
-            console.error('Error submitting registration', error);
+            console.log('Message:', message, 'Error:', isError);
+            console.error('Error:', error);
+            setMessage(error.toString());
+            setIsError(true); // Set error state to true
         }
     };
 
@@ -78,7 +74,7 @@ function RegistrationForm() {
                         className="form-control"
                         placeholder="Type your full name"
                         value={fullName}
-                        onChange={handleInputChange}
+                        onChange={handleInputChange} 
                         required
                     />
                 </div>
@@ -91,7 +87,7 @@ function RegistrationForm() {
                         className="form-control"
                         placeholder="Type your email"
                         value={email}
-                        onChange={handleInputChange}
+                        onChange={handleInputChange} 
                         required
                     />
                 </div>
@@ -104,7 +100,7 @@ function RegistrationForm() {
                         className="form-control"
                         placeholder="Type your username"
                         value={username}
-                        onChange={handleInputChange}
+                        onChange={handleInputChange} 
                         required
                     />
                 </div>
@@ -117,7 +113,7 @@ function RegistrationForm() {
                         className="form-control"
                         placeholder="Type your password"
                         value={password}
-                        onChange={handleInputChange}
+                        onChange={handleInputChange} 
                         required
                     />
                 </div>
@@ -128,7 +124,7 @@ function RegistrationForm() {
                         name="role"
                         className="form-control"
                         value={role}
-                        onChange={handleInputChange}
+                        onChange={handleInputChange} 
                         required
                     >
                         <option disabled value="">Select your current status</option>
@@ -142,6 +138,8 @@ function RegistrationForm() {
                 <div className="form-group">
                     <button type="submit" className="submit-button">Register</button>
                 </div>
+                {/* Display message */}
+                {message && <div className={isError ? "error-message" : "success-message"}>{message}</div>}
             </form>
         </div>
     );
