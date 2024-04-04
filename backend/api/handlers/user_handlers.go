@@ -32,8 +32,8 @@ func (h *UserHandlers) RegisterUserHandler(w http.ResponseWriter, r *http.Reques
 
 	err := h.userService.RegisterUser(&user)
 	if err != nil {
-		if err == service.ErrUsernameTaken {
-			api.LogErrorWithDetails(w, "Username already taken", err, http.StatusConflict) // Use HTTP 409 Conflict for duplicate username
+		if err == service.ErrUsernameOrEmailTaken {
+			api.LogErrorWithDetails(w, "Username or email already taken", err, http.StatusConflict) // Use HTTP 409 Conflict for duplicate username
 		} else {
 			api.LogErrorWithDetails(w, "Failed to register user", err, http.StatusInternalServerError)
 		}

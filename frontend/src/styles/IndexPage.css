@@ -2,9 +2,16 @@
 
 :root {
     --color-white: #f3f3f3;
+    --color-white-alpha: rgba(243, 243, 243, 0.8);
     --color-darkblue: #1b1b32;
+    --color-light-blue: #5A708C;
+    --color-light-blue-alpha: rgba(90, 112, 140, 0.8);
     --color-darkblue-alpha: rgba(27, 27, 50, 0.8);
     --color-green: #37af65;
+    --color-rose-alpha: rgba(255, 192, 203, 0.8);
+    --color-darker-rose-alpha: rgba(228, 108, 128, 0.9);
+    --color-black: #000;
+    --color-black-alpha: rgba(0, 0, 0, 0.8);
 }
 
 *,
@@ -18,7 +25,7 @@ body, a {
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.4;
-    color: var(--color-white);
+    color: var(--color-black);
     margin: 0;
 }
 
@@ -34,11 +41,11 @@ body::before {
     height: 100%;
     width: 100%;
     z-index: -1;
-    background: var(--color-darkblue);
+    background: var(--color-light-blue);
     background-image: linear-gradient(
             115deg,
-            rgba(58, 58, 158, 0.8),
-            rgba(136, 136, 206, 0.7)
+            rgba(201, 53, 78, 0.9),
+            rgba(255, 192, 203, 0.8)
     ),
     url(https://ableton-production.imgix.net/live/creation-space-front-10.jpg?auto=compress%2Cformat&w=768);
     background-size: cover;
@@ -121,7 +128,7 @@ button {
 }
 
 form {
-    background: var(--color-darkblue-alpha);
+    background: var(--color-white-alpha);
     padding: 2.5rem 0.625rem;
     border-radius: 0.25rem;
 }
@@ -175,8 +182,12 @@ form {
     display: block;
     width: 100%;
     padding: 0.75rem;
-    background: var(--color-green);
-    color: inherit;
+    background-color: var(--color-black); /* Black background for buttons */
+    color: var(--color-white); /* White text for contrast */
     border-radius: 2px;
     cursor: pointer;
+}
+
+.submit-button:hover {
+    background-color: rgba(255, 192, 203, 0.8)
 }
