@@ -1,96 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../authContext'; // Adjust the import path as necessary
+import { useState, useRef } from 'react'
 
-const Dashboard = () => {
-  const { logout } = useAuth();
-  const [playlists, setPlaylists] = useState([]);
-  const [spotifySearch, setSpotifySearch] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [otherPlaylists, setOtherPlaylists] = useState([]);
+import Nav from './Nav'
+import Player from './Player'
+import Song from './Song'
+import Library from './Library'
 
-  useEffect(() => {
-    // Placeholder function, replace with actual fetch call to get user's playlists
-    const fetchMyPlaylists = async () => {
-      // Implement fetching of user's playlists
-    };
-    fetchMyPlaylists();
-  }, []);
+import data from '../data'
 
-  const handleSpotifySearch = async (e) => {
-    e.preventDefault();
-    if (!spotifySearch.trim()) return; // Avoid empty search queries
-    
-    try {
-      const response = await fetch(`http://localhost:8081/api/v1/songs/search?query=${encodeURIComponent(spotifySearch)}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`, // Ensure the request is authenticated
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.songs);
-      } else {
-        console.error("Failed to fetch search results");
-        setSearchResults([]);
-      }
-    } catch (error) {
-      console.error("Error searching Spotify:", error);
-      setSearchResults([]);
+import '../styles/Dashboard.scss'
+
+const App = () => {
+    const audioRef = useRef(null)
+
+    const [songInfo, setSongInfo] = useState({
+        currentTime: 0,
+        duration: 0,
+        animationPercentage: 0
+    })
+    const [songs, setSongs] = useState(data())
+    const [currentSong, setCurrentSong] = useState(songs[0])
+    const [isPlaying, setIsPlaying] = useState(false)
+    const [libraryStatus, setLibraryStatus] = useState(false)
+    const [songvolume, setSongVolume] = useState(.8)
+
+    const timeUpdateHandler = (e) => {
+        const current = e.target.currentTime;
+        const duration = e.target.duration;
+        const roundedContent = Math.round(current)
+        const roundedDuration = Math.round(duration)
+        const animation = Math.round((roundedContent / roundedDuration) * 100)
+        setSongInfo({...songInfo, currentTime: current, duration, animationPercentage: animation})
     }
-  };
 
-  useEffect(() => {
-    // Placeholder function, replace with actual fetch call to get other users' playlists
-    const fetchOtherPlaylists = async () => {
-      // Implement fetching of other users' playlists
-    };
-    fetchOtherPlaylists();
-  }, []);
+    const songEndHandler = async() => {
+        let currentIndex = songs.findIndex(song => song.id === currentSong.id)
+        await setCurrentSong(songs[(currentIndex + 1) % songs.length])
+        if(isPlaying) {
+            audioRef.current.play()
+        }
+    }
 
-  return (
-    <div>
-      <h1>Dashboard</h1>
-      <button onClick={logout}>Logout</button>
-      
-      <section>
-        <h2>My Playlists</h2>
-        <ul>
-          {playlists.map((playlist, index) => (
-            <li key={index}>{playlist.name}</li>
-          ))}
-        </ul>
-      </section>
+    return (
+        <div className={`App ${libraryStatus ? 'library-active' : ''}`}>
+            <Nav 
+                libraryStatus={libraryStatus} 
+                setLibraryStatus={setLibraryStatus} 
+            />
+            <Song currentSong={currentSong} />
+            <Player 
+                songs={songs} 
+                setSongs={setSongs}
+                currentSong={currentSong}
+                setCurrentSong={setCurrentSong} 
+                audioRef={audioRef}
+                isPlaying={isPlaying}
+                setIsPlaying={setIsPlaying} 
+                songInfo={songInfo}
+                setSongInfo={setSongInfo}
+                songvolume={songvolume}
+                setSongVolume={setSongVolume}
+            />
+            <Library 
+                songs={songs} 
+                setSongs={setSongs}
+                setCurrentSong={setCurrentSong} 
+                audioRef={audioRef}
+                isPlaying={isPlaying}
+                libraryStatus={libraryStatus} 
+            />
+            <audio 
+                className="audio"
+                onTimeUpdate={timeUpdateHandler} 
+                onLoadedMetadata={timeUpdateHandler} 
+                ref={audioRef} 
+                src={currentSong.audio}
+                onEnded={songEndHandler}
+            >
+            </audio>
+        </div>
+    )
+}
 
-      <section>
-        <h2>Search Spotify</h2>
-        <form onSubmit={handleSpotifySearch}>
-          <input
-            type="text"
-            value={spotifySearch}
-            onChange={(e) => setSpotifySearch(e.target.value)}
-            placeholder="Search songs on Spotify"
-          />
-          <button type="submit">Search</button>
-        </form>
-        <ul>
-          {searchResults.map((result, index) => (
-            <li key={index}>{result.name} by {result.artist}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h2>Explore Playlists</h2>
-        <ul>
-          {otherPlaylists.map((playlist, index) => (
-            <li key={index}>{playlist.name} - {playlist.rating}</li>
-          ))}
-        </ul>
-      </section>
-    </div>
-  );
-};
-
-export default Dashboard;
+export default App

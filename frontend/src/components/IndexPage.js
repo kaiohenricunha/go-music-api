@@ -1,5 +1,5 @@
 import React from 'react';
-import './IndexPage.css';
+import '../styles/IndexPage.css';
 import { Link } from 'react-router-dom';
 
 function IndexPage() {
