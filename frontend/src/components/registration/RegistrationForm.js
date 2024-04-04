@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/RegistrationForm.css';
+import './RegistrationForm.css';
 
 function RegistrationForm() {
     const [fullName, setFullName] = useState('');

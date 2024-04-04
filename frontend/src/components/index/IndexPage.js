@@ -1,6 +1,6 @@
 import React from 'react';
-import '../styles/IndexPage.css';
 import { Link } from 'react-router-dom';
+import './IndexPage.css';
 
 function IndexPage() {
   return (
