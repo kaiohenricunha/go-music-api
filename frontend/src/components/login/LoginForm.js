@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // This will be used for redirection
 import { useAuth } from '../../authContext';
-import './LoginForm.css';
 
 function LoginForm() {
   const [username, setUsername] = useState('');
@@ -9,6 +8,14 @@ function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate(); // Initialized for redirection
   const apiEndpoint = `${process.env.REACT_APP_API_URL}/api/v1/login`;
+
+  useEffect(() => {
+    document.body.classList.add('bg-image-page2');
+
+    return () => {
+      document.body.classList.remove('bg-image-page2');
+    };
+  }, []);
 
   const handleLogin = async (event) => {
     event.preventDefault();
