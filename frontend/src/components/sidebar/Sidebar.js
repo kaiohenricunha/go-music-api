@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../authContext';
+import { useAuth } from '../../authContext';
+// import './Sidebar.css';
 
 const Sidebar = () => {
   const { isAuthenticated, logout } = useAuth();

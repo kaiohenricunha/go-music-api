@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import '../styles/RegistrationForm.css';
+import React, { useState, useEffect } from 'react';
 
 function RegistrationForm() {
     const [fullName, setFullName] = useState('');
@@ -9,6 +8,14 @@ function RegistrationForm() {
     const [role, setRole] = useState('');
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
+
+    useEffect(() => {
+        document.body.classList.add('bg-image-page1');
+    
+        return () => {
+          document.body.classList.remove('bg-image-page1');
+        };
+      }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

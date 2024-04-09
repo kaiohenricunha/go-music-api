@@ -1,0 +1,36 @@
+.sidebar {
+  width: 100%; /* Stretch across the top */
+  height: 50px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: var(--color-black-alpha);
+  color: var(--color-white);
+  padding: 0 20px; /* Adjust padding for content inside the bar */
+  display: flex;
+  align-items: center; /* Center items vertically */
+  z-index: 1000;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0; /* Remove default margin */
+  display: flex; /* Layout items in a row */
+}
+
+.sidebar li {
+  margin-right: 20px; /* Space between menu items */
+}
+
+.sidebar a, .sidebar button {
+  color: var(--color-white);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sidebar button:hover, .sidebar a:hover {
+  text-decoration: underline;
+}
