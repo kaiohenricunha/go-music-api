@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // This will be used for redirection
 import { useAuth } from '../../authContext';
 
@@ -9,13 +9,13 @@ function LoginForm() {
   const navigate = useNavigate(); // Initialized for redirection
   const apiEndpoint = `${process.env.REACT_APP_GO_BACKEND_BASE_URL}/login`;
 
-  useEffect(() => {
-    document.body.classList.add('bg-image-page2');
+  // useEffect(() => {
+  //   document.body.classList.add('bg-image-page2');
 
-    return () => {
-      document.body.classList.remove('bg-image-page2');
-    };
-  }, []);
+  //   return () => {
+  //     document.body.classList.remove('bg-image-page2');
+  //   };
+  // }, []);
 
   const handleLogin = async (event) => {
     event.preventDefault();

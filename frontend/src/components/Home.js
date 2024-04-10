@@ -2,13 +2,13 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 function IndexPage() {
-  useEffect(() => {
-    document.body.classList.add('bg-image-page3');
+//   useEffect(() => {
+//     document.body.classList.add('bg-image-page3');
 
-    return () => {
-      document.body.classList.remove('bg-image-page3');
-    };
-  }, []);
+//     return () => {
+//       document.body.classList.remove('bg-image-page3');
+//     };
+//   }, []);
 
   return (
     <div className="container">
