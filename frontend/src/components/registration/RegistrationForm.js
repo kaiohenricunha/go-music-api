@@ -45,7 +45,7 @@ function RegistrationForm() {
         setMessage(''); // Clear previous message
         setIsError(false); // Reset error state
 
-        const apiEndpoint = `${process.env.REACT_APP_API_URL}/api/v1/register`;
+        const apiEndpoint = `${process.env.REACT_APP_GO_BACKEND_BASE_URL}/register`;
         try {
             const response = await fetch(apiEndpoint, {
                 method: 'POST',

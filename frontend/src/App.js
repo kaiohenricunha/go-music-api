@@ -1,30 +1,43 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './authContext';
 import LoginForm from './components/login/LoginForm';
 import Sidebar from './components/sidebar/Sidebar';
 import IndexPage from './components/index/IndexPage';
 import RegistrationForm from './components/registration/RegistrationForm';
+import Dashboard from './components/dashboard/Dashboard';
 
-function App() {
+const AppWrapper = () => {
   return (
     <AuthProvider>
       <Router>
-        <Sidebar /> {/* This ensures the sidebar is shown on every page */}
-        <Routes>
-          <Route path="/" element={<IndexPage />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/register" element={<RegistrationForm />} />
-        </Routes>
+        <App />
       </Router>
     </AuthProvider>
   );
-}
+};
 
-function PrivateRoute({ children }) {
+const App = () => {
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
-}
+  return (
+    <>
+      {location.pathname !== "/dashboard" && <Sidebar />}
+      <Routes>
+        <Route path="/" element={<IndexPage />} />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/register" element={<RegistrationForm />} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      </Routes>
+    </>
+  );
+};
 
-export default App;
+function PrivateRoute({ children }) {
+  const auth = useAuth();
+
+  return auth.isAuthenticated ? children : <Navigate to="/login" />;
+};
+
+export default AppWrapper;

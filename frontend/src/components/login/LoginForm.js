@@ -7,7 +7,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate(); // Initialized for redirection
-  const apiEndpoint = `${process.env.REACT_APP_API_URL}/api/v1/login`;
+  const apiEndpoint = `${process.env.REACT_APP_GO_BACKEND_BASE_URL}/login`;
 
   useEffect(() => {
     document.body.classList.add('bg-image-page2');
