@@ -172,6 +172,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap; /* Ensures the text does not wrap and adds an ellipsis if it overflows */
+    max-width: 280px; /* Adjust based on the card width to ensure text fits */
+    padding: 0 10px; /* Add some padding on both sides */
+    margin: 10px 0; /* Provide some top and bottom margin */
   }
   
   .card-text {

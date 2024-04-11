@@ -13,6 +13,7 @@ type MusicDAO interface {
 	CreateSong(song *model.Song) error
 	GetAllSongs() ([]model.Song, error)
 	GetSongByID(songID string) (*model.Song, error)
+	GetSongBySpotifyID(spotifyID string) (*model.Song, error)
 	GetSongByNameAndArtist(songName, artistName string) (*model.Song, error)
 	GetSongFromSpotifyByID(spotifyID string) (*model.Song, error)
 	SearchSongsFromSpotify(trackName, artistName string) ([]model.Song, error)

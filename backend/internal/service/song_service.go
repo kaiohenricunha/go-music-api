@@ -170,7 +170,6 @@ func (s *songService) searchLocalDatabase(trackName, artistName string) ([]*mode
 
 func (s *songService) searchOnSpotify(trackName, artistName string) ([]*model.Song, error) {
 	log.Printf("Searching for song on Spotify: %s by %s", trackName, artistName)
-
 	query := url.QueryEscape(fmt.Sprintf("track:%s artist:%s", trackName, artistName))
 	requestURL := fmt.Sprintf("https://api.spotify.com/v1/search?q=%s&type=track", query)
 
@@ -191,9 +190,38 @@ func (s *songService) searchOnSpotify(trackName, artistName string) ([]*model.So
 	}
 	defer resp.Body.Close()
 
-	return s.parseSpotifyResponse(resp)
+	songs, parseErr := s.parseSpotifyResponse(resp)
+	if parseErr != nil {
+		return nil, parseErr
+	}
+
+	for _, song := range songs {
+		// check if the song already exists in the database
+		_, err := s.songDAO.GetSongBySpotifyID(song.SpotifyID)
+		if err == nil {
+			log.Printf("Song already exists in database: %s by %s", song.Name, song.Artist)
+			continue
+		}
+
+		// save the song to the database
+		err = s.songDAO.CreateSong(song)
+		if err != nil {
+			log.Printf("Failed to save song to database: %v", err)
+		}
+
+		log.Printf("Song saved to database: %s by %s", song.Name, song.Artist)
+	}
+
+	return songs, nil
 }
 
+// GetSongBySpotifyID retrieves a song by its Spotify ID.
+func (s *songService) GetSongBySpotifyID(spotifyID string) (*model.Song, error) {
+	log.Printf("GetSongBySpotifyID called for Spotify ID: %s", spotifyID)
+	return s.songDAO.GetSongBySpotifyID(spotifyID)
+}
+
+// parseSpotifyResponse parses the Spotify API response and returns a slice of Song objects.
 func (s *songService) parseSpotifyResponse(resp *http.Response) ([]*model.Song, error) {
 	var spotifyResponse SpotifyTrackResponse
 	if err := json.NewDecoder(resp.Body).Decode(&spotifyResponse); err != nil {

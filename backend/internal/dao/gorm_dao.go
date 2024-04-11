@@ -2,6 +2,7 @@ package dao
 
 import (
 	"errors"
+	"log"
 	"strconv"
 
 	"github.com/kaiohenricunha/go-music-k8s/backend/internal/model"
@@ -79,6 +80,7 @@ func (g *GormDAO) GetUserByUsername(username string) (*model.User, error) {
 
 // CreateSong inserts a new song into the database.
 func (g *GormDAO) CreateSong(song *model.Song) error {
+	log.Printf("Creating song: %s by %s", song.Name, song.Artist)
 	return g.DB.Create(song).Error
 }
 
@@ -93,6 +95,17 @@ func (g *GormDAO) GetAllSongs() ([]model.Song, error) {
 func (g *GormDAO) GetSongByID(songID string) (*model.Song, error) {
 	var song model.Song
 	err := g.DB.Where("id = ?", songID).First(&song).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrSongNotFound
+	}
+	return &song, err
+}
+
+// GetSongBySpotifyID retrieves a single song by Spotify ID.
+func (g *GormDAO) GetSongBySpotifyID(spotifyID string) (*model.Song, error) {
+	log.Printf("GORM GetSongBySpotifyID called for Spotify ID: %s", spotifyID)
+	var song model.Song
+	err := g.DB.Where("spotify_id = ?", spotifyID).First(&song).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrSongNotFound
 	}

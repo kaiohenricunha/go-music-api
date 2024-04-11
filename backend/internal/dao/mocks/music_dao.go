@@ -307,3 +307,26 @@ func (_m *MusicDAO) RemoveSongFromPlaylist(playlistID, songID string) error {
 
 	return r0
 }
+
+// GetSongBySpotifyID mocks the GetSongBySpotifyID method
+func (_m *MusicDAO) GetSongBySpotifyID(spotifyID string) (*model.Song, error) {
+	ret := _m.Called(spotifyID)
+
+	var r0 *model.Song
+	if rf, ok := ret.Get(0).(func(string) *model.Song); ok {
+		r0 = rf(spotifyID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Song)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(spotifyID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
