@@ -2,34 +2,25 @@ import React, { useState } from 'react';
 import { useAuth } from '../../authContext';
 import SearchForm from './SearchForm';
 import SearchResult from './SearchResult';
+import { initiateGetSongs } from '../../actions/result'; 
+import { useDispatch } from 'react-redux'; 
 import axios from 'axios';
 
 const Dashboard = () => {
-  const [songs, setSongs] = useState([]);
-  const { token } = useAuth(); // Use the token from the AuthContext
+  // No more need for local songs state
+  const { token } = useAuth(); 
+  const dispatch = useDispatch(); 
 
-  const handleSearch = async (searchTerm) => {
-    try {
-      console.log('searchTerm:', searchTerm, typeof searchTerm); // debug
-
-      const [trackName, artistName] = searchTerm.split(' by ');
-      const response = await axios.get(`${process.env.REACT_APP_GO_BACKEND_BASE_URL}/songs/search`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // Include the JWT token in the request header
-        },
-        params: { songName: trackName.trim(), artistName: artistName.trim() },
-      });
-      setSongs(response.data);
-    } catch (error) {
-      console.error('Search error:', error);
-      setSongs([]); // Clear songs on search error
-    }
-  };
+  const handleSearch = (searchTerm) => {
+    console.log('searchTerm:', searchTerm); 
+    // Dispatch the action to fetch songs asynchronously using Redux
+    dispatch(initiateGetSongs(searchTerm, token)); // Pass the search term and token
+  };  
 
   return (
     <div>
       <SearchForm onSearch={handleSearch} />
-      <SearchResult songs={songs} />
+      <SearchResult /> {/* Songs will be taken from Redux */}
     </div>
   );
 };

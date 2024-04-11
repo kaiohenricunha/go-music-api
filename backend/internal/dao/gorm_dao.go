@@ -103,10 +103,13 @@ func (g *GormDAO) GetSongByID(songID string) (*model.Song, error) {
 func (g *GormDAO) GetSongByNameAndArtist(songName, artistName string) (*model.Song, error) {
 	var song model.Song
 	err := g.DB.Where("song_name = ? AND artist_name = ?", songName, artistName).First(&song).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrSongNotFound
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound // Ensure the correct error is returned
+		}
+		return nil, err // Handle other errors properly
 	}
-	return &song, err
+	return &song, nil
 }
 
 // GetSongFromSpotifyByID retrieves a single song by Spotify ID.

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -30,7 +31,12 @@ func JWTAuthMiddleware(userService service.UserService) func(http.Handler) http.
 
 			claims := &jwt.StandardClaims{}
 			tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+			var err error
 			tkn, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				// Log the token's content if validation fails
+				if err != nil {
+					log.Printf("JWT Validation Error: %v. Token: %s", err, tokenString)
+				}
 				return jwtKey, nil
 			})
 
@@ -39,6 +45,9 @@ func JWTAuthMiddleware(userService service.UserService) func(http.Handler) http.
 					http.Error(w, "Invalid token signature", http.StatusUnauthorized)
 					return
 				}
+
+				// Log any validation errors in detail
+				log.Printf("JWT Validation Error: %v", err)
 				http.Error(w, "Invalid token", http.StatusBadRequest)
 				return
 			}
