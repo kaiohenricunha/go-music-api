@@ -5,17 +5,9 @@ import { useAuth } from '../../authContext';
 function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const { login } = useAuth();  // Destructure login function from context
   const navigate = useNavigate(); // Initialized for redirection
   const apiEndpoint = `${process.env.REACT_APP_GO_BACKEND_BASE_URL}/login`;
-
-  // useEffect(() => {
-  //   document.body.classList.add('bg-image-page2');
-
-  //   return () => {
-  //     document.body.classList.remove('bg-image-page2');
-  //   };
-  // }, []);
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -74,7 +66,7 @@ function LoginForm() {
           <input id="submit" className="submit-button" type="submit" value="Login" />
         </div>
         <div className="text-center">
-          <a href="/register">Register</a> {/* Use Link component for SPA */}
+          <a href="/registration">Sign Up</a> {/* Use Link component for SPA */}
         </div>
       </form>
     </div>

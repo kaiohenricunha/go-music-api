@@ -9,13 +9,13 @@ function RegistrationForm() {
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
 
-    useEffect(() => {
-        document.body.classList.add('bg-image-page1');
+    // useEffect(() => {
+    //     document.body.classList.add('bg-image-page1');
     
-        return () => {
-          document.body.classList.remove('bg-image-page1');
-        };
-      }, []);
+    //     return () => {
+    //       document.body.classList.remove('bg-image-page1');
+    //     };
+    //   }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

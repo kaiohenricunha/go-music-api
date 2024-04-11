@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-function IndexPage() {
+function Home() {
 //   useEffect(() => {
 //     document.body.classList.add('bg-image-page3');
 
@@ -17,10 +17,10 @@ function IndexPage() {
         Dive into the world of Musilist, where music curation meets community wisdom.
       </p>
       <div className="text-center">
-        <Link to="/register" className="enter-now-link">Enter Now</Link>
+        <Link to="/registration">Sign Up</Link> {/* Use Link component for SPA */}
       </div>
     </div>
   );
 }
 
-export default IndexPage;
+export default Home;

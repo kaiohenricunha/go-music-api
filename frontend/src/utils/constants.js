@@ -1,0 +1,9 @@
+export const SET_SONGS = 'SET_SONGS';
+export const ADD_SONG = 'ADD_SONG';
+export const ADD_SONGS = 'ADD_SONGS';
+export const SET_SONG = 'SET_SONG';
+export const SET_USER = 'SET_USER';
+export const SET_USERS = 'SET_USERS';
+export const SET_PLAYLIST = 'SET_PLAYLIST';
+export const ADD_PLAYLIST = 'ADD_PLAYLIST';
+export const REACT_APP_GO_BACKEND_BASE_URL = 'http://localhost:8080/api/v1';
