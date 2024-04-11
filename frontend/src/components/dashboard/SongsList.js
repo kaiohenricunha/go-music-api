@@ -1,7 +1,7 @@
 import React from 'react';
 import music from '../../images/music.jpeg'; // Placeholder image
 
-const SongsList = ({ songs }) => {
+const SongsList = ({ songs, onToggleView }) => {
   return (
     <React.Fragment>
       {songs.length > 0 && (
