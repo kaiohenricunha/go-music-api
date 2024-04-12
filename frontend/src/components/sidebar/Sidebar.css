@@ -1,0 +1,8 @@
+.app-layout {
+    display: flex;
+  }
+  
+  .main-content {
+    flex-grow: 1; /* Takes up the remaining space */
+  }
+  
